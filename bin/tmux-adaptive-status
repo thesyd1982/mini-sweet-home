@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Adaptive tmux status based on session name
+SESSION=$(tmux display-message -p '#S')
+PWD=$(tmux display-message -p '#{pane_current_path}')
+
+case "$SESSION" in
+    "develop"|"dev"|"code")
+        # Developer: git branch + time
+        if cd "$PWD" && git rev-parse --git-dir >/dev/null 2>&1; then
+            BRANCH=$(git branch 2>/dev/null | grep '*' | cut -d' ' -f2 | head -c8)
+            echo "git:$BRANCH $(date '+%H:%M')"
+        else
+            echo "dev $(date '+%H:%M')"
+        fi
+        ;;
+    "minimal"|"mini")
+        # Minimal: just time
+        date '+%H:%M'
+        ;;
+    "admin"|"sys"|"system")
+        # System: load + memory
+        LOAD=$(uptime | awk -F'load average:' '{print $2}' | cut -d',' -f1 | xargs)
+        MEM=$(free | awk '/^Mem/ {printf "%.0f%%", $3/$2 * 100.0}')
+        echo "↑$LOAD mem:$MEM"
+        ;;
+    "work"|"office")
+        # Work: date + time
+        date '+%d/%m %H:%M'
+        ;;
+    *)
+        # Default: session name + time
+        echo "$SESSION $(date '+%H:%M')"
+        ;;
+esac

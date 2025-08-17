@@ -1,0 +1,326 @@
+#!/bin/bash
+
+# ===============================
+# 🚀 MINI SWEET HOME - INSTALLER PRINCIPAL
+# ===============================
+
+set -euo pipefail
+
+readonly DOTFILES_DIR="$HOME/mini-sweet-home"
+readonly BACKUP_DIR="$HOME/.dotfiles_backup_$(date +%Y%m%d_%H%M%S)"
+
+# Couleurs
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly BLUE='\033[0;34m'
+readonly PURPLE='\033[0;35m'
+readonly CYAN='\033[0;36m'
+readonly NC='\033[0m'
+
+log() { echo -e "${GREEN}[$(date +'%H:%M:%S')]${NC} $1"; }
+warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+error() { echo -e "${RED}[ERROR]${NC} $1" >&2; }
+info() { echo -e "${BLUE}[INFO]${NC} $1"; }
+success() { echo -e "${GREEN}✅${NC} $1"; }
+
+show_banner() {
+    clear
+    echo -e "${PURPLE}"
+    cat << 'EOF'
+    ██████╗  ██████╗ ████████╗███████╗██╗██╗     ███████╗███████╗
+    ██╔══██╗██╔═══██╗╚══██╔══╝██╔════╝██║██║     ██╔════╝██╔════╝
+    ██║  ██║██║   ██║   ██║   █████╗  ██║██║     █████╗  ███████╗
+    ██║  ██║██║   ██║   ██║   ██╔══╝  ██║██║     ██╔══╝  ╚════██║
+    ██████╔╝╚██████╔╝   ██║   ██║     ██║███████╗███████╗███████║
+    ╚═════╝  ╚═════╝    ╚═╝   ╚═╝     ╚═╝╚══════╝╚══════╝╚══════╝
+EOF
+    echo -e "${NC}"
+    echo -e "${CYAN}                    🚀 Dotfiles V4 - Installation${NC}"
+    echo -e "${BLUE}        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo
+}
+
+show_usage() {
+    echo -e "${YELLOW}USAGE:${NC}"
+    echo "  ./install [COMMAND|PROFILE]"
+    echo
+    echo -e "${YELLOW}PROFILES:${NC}"
+    echo "  minimal        - Configurations de base + outils essentiels"
+    echo "  developer      - Profil développeur (Node, Python, Rust, Go)"
+    echo "  devops         - Profil DevOps (Docker, Kubernetes)"
+    echo "  data-science   - Profil Data Science (Python + Jupyter)"
+    echo "  security       - Profil sécurité (outils de pentest)"
+    echo "  complete       - Installation complète"
+    echo
+    echo -e "${YELLOW}COMMANDS:${NC}"
+    echo "  --analyze      - Analyser la configuration actuelle"
+    echo "  --test         - Tester l'installation"
+    echo "  --uninstall    - Désinstaller et restaurer"
+    echo "  --help         - Afficher cette aide"
+    echo
+}
+
+create_symlinks() {
+    log "Création des liens symboliques..."
+    
+    # Sauvegarde
+    mkdir -p "$BACKUP_DIR"
+    local configs=(".zshrc" ".tmux.conf" ".gitconfig" ".config/nvim")
+    for config in "${configs[@]}"; do
+        if [[ -e "$HOME/$config" && ! -L "$HOME/$config" ]]; then
+            cp -r "$HOME/$config" "$BACKUP_DIR/" 2>/dev/null || true
+            info "Sauvegardé: $config"
+        fi
+    done
+    
+    # Liens symboliques
+    local links_created=0
+    
+    # ZSH
+    [[ -e "$HOME/.zshrc" ]] && rm -f "$HOME/.zshrc"
+    ln -sf "$DOTFILES_DIR/configs/shell/zsh/zshrc" "$HOME/.zshrc"
+    success "Lié: ~/.zshrc"
+    ((links_created++))
+    
+    # Tmux
+    [[ -e "$HOME/.tmux.conf" ]] && rm -f "$HOME/.tmux.conf"
+    ln -sf "$DOTFILES_DIR/configs/tmux/tmux.conf" "$HOME/.tmux.conf"
+    success "Lié: ~/.tmux.conf"
+    ((links_created++))
+    
+    # Git
+    [[ -e "$HOME/.gitconfig" ]] && rm -f "$HOME/.gitconfig"
+    ln -sf "$DOTFILES_DIR/configs/git/gitconfig" "$HOME/.gitconfig"
+    success "Lié: ~/.gitconfig"
+    ((links_created++))
+    
+    # Neovim
+    mkdir -p "$HOME/.config"
+    [[ -e "$HOME/.config/nvim" ]] && rm -rf "$HOME/.config/nvim"
+    ln -sf "$DOTFILES_DIR/configs/nvim" "$HOME/.config/nvim"
+    success "Lié: ~/.config/nvim"
+    ((links_created++))
+    
+    # Cache directories
+    mkdir -p "$HOME/.cache/zsh"
+    
+    success "Configuration terminée ($links_created liens créés)"
+}
+
+install_profile() {
+    local profile="$1"
+    
+    log "Installation du profil: $profile"
+    
+    # Toujours créer les liens symboliques
+    create_symlinks
+    
+    # Installer les outils selon le profil
+    case "$profile" in
+        minimal)
+            [[ -f "$DOTFILES_DIR/tools/essential.sh" ]] && source "$DOTFILES_DIR/tools/essential.sh"
+            ;;
+        developer)
+            [[ -f "$DOTFILES_DIR/tools/essential.sh" ]] && source "$DOTFILES_DIR/tools/essential.sh"
+            [[ -f "$DOTFILES_DIR/tools/development.sh" ]] && source "$DOTFILES_DIR/tools/development.sh"
+            ;;
+        devops)
+            [[ -f "$DOTFILES_DIR/tools/essential.sh" ]] && source "$DOTFILES_DIR/tools/essential.sh"
+            [[ -f "$DOTFILES_DIR/tools/development.sh" ]] && source "$DOTFILES_DIR/tools/development.sh"
+            [[ -f "$DOTFILES_DIR/tools/devops.sh" ]] && source "$DOTFILES_DIR/tools/devops.sh"
+            ;;
+        data-science)
+            [[ -f "$DOTFILES_DIR/tools/essential.sh" ]] && source "$DOTFILES_DIR/tools/essential.sh"
+            if command -v pip3 >/dev/null 2>&1; then
+                pip3 install --user jupyter pandas numpy matplotlib seaborn scikit-learn
+            fi
+            ;;
+        security)
+            [[ -f "$DOTFILES_DIR/tools/essential.sh" ]] && source "$DOTFILES_DIR/tools/essential.sh"
+            [[ -f "$DOTFILES_DIR/tools/security.sh" ]] && source "$DOTFILES_DIR/tools/security.sh"
+            ;;
+        complete)
+            [[ -f "$DOTFILES_DIR/tools/essential.sh" ]] && source "$DOTFILES_DIR/tools/essential.sh"
+            [[ -f "$DOTFILES_DIR/tools/development.sh" ]] && source "$DOTFILES_DIR/tools/development.sh"
+            [[ -f "$DOTFILES_DIR/tools/devops.sh" ]] && source "$DOTFILES_DIR/tools/devops.sh"
+            [[ -f "$DOTFILES_DIR/tools/security.sh" ]] && source "$DOTFILES_DIR/tools/security.sh"
+            ;;
+        *)
+            warn "Profil inconnu: $profile, utilisation de 'minimal'"
+            [[ -f "$DOTFILES_DIR/tools/essential.sh" ]] && source "$DOTFILES_DIR/tools/essential.sh"
+            ;;
+    esac
+    
+    success "Profil $profile installé avec succès!"
+}
+
+analyze_current() {
+    log "Analyse de la configuration actuelle..."
+    echo
+    
+    echo -e "${CYAN}📁 Structure dotfiles:${NC}"
+    if [[ -d "$DOTFILES_DIR" ]]; then
+        echo "  ✅ Dotfiles trouvés dans: $DOTFILES_DIR"
+        
+        if [[ -d "$DOTFILES_DIR/configs" ]]; then
+            echo "  ✅ Structure V4 détectée"
+        elif [[ -d "$DOTFILES_DIR/core" ]]; then
+            echo "  ✅ Structure V3 détectée"
+        else
+            echo "  ⚠️  Structure inconnue"
+        fi
+    else
+        echo "  ❌ Dotfiles non trouvés"
+    fi
+    
+    echo
+    echo -e "${CYAN}🔗 Liens symboliques:${NC}"
+    local configs=(".zshrc" ".tmux.conf" ".gitconfig" ".config/nvim")
+    for config in "${configs[@]}"; do
+        if [[ -L "$HOME/$config" ]]; then
+            echo "  ✅ $config -> $(readlink "$HOME/$config")"
+        elif [[ -e "$HOME/$config" ]]; then
+            echo "  📄 $config (fichier local)"
+        else
+            echo "  ❌ $config manquant"
+        fi
+    done
+    
+    echo
+    echo -e "${CYAN}🛠️  Outils installés:${NC}"
+    local tools=("git" "zsh" "tmux" "nvim" "fzf" "zoxide" "exa" "rg")
+    for tool in "${tools[@]}"; do
+        if command -v "$tool" >/dev/null 2>&1; then
+            echo "  ✅ $tool"
+        else
+            echo "  ❌ $tool manquant"
+        fi
+    done
+}
+
+test_installation() {
+    log "Tests de validation..."
+    local tests_passed=0
+    local tests_total=0
+    
+    echo
+    echo -e "${CYAN}🧪 Tests:${NC}"
+    
+    # Test configuration shell
+    ((tests_total++))
+    if [[ -f "$HOME/.zshrc" ]]; then
+        echo "  ✅ Configuration shell trouvée"
+        ((tests_passed++))
+    else
+        echo "  ❌ Configuration shell manquante"
+    fi
+    
+    # Test chargement ZSH
+    ((tests_total++))
+    if zsh -c "source ~/.zshrc && echo 'test'" >/dev/null 2>&1; then
+        echo "  ✅ Configuration ZSH se charge correctement"
+        ((tests_passed++))
+    else
+        echo "  ❌ Erreur de chargement ZSH"
+    fi
+    
+    # Test fonctions
+    ((tests_total++))
+    if zsh -c "source ~/.zshrc && type jp" >/dev/null 2>&1; then
+        echo "  ✅ Fonctions personnalisées chargées"
+        ((tests_passed++))
+    else
+        echo "  ❌ Fonctions personnalisées manquantes"
+    fi
+    
+    echo
+    info "Résultats: $tests_passed/$tests_total tests réussis"
+    
+    if [[ $tests_passed -eq $tests_total ]]; then
+        success "🎉 Installation validée!"
+    else
+        warn "Installation partielle"
+    fi
+}
+
+uninstall() {
+    log "Désinstallation..."
+    
+    local latest_backup=$(ls -t "$HOME"/.dotfiles_backup_* 2>/dev/null | head -1)
+    
+    if [[ -n "$latest_backup" && -d "$latest_backup" ]]; then
+        info "Restauration depuis: $latest_backup"
+        
+        # Supprimer les liens symboliques
+        local configs=(".zshrc" ".tmux.conf" ".gitconfig" ".config/nvim")
+        for config in "${configs[@]}"; do
+            if [[ -L "$HOME/$config" ]]; then
+                rm "$HOME/$config"
+                info "Supprimé: $config"
+            fi
+        done
+        
+        # Restaurer les fichiers
+        for file in "$latest_backup"/*; do
+            if [[ -f "$file" ]]; then
+                cp "$file" "$HOME/"
+                info "Restauré: $(basename "$file")"
+            fi
+        done
+        
+        success "Restauration terminée"
+    else
+        warn "Aucune sauvegarde trouvée"
+    fi
+}
+
+main() {
+    local command="${1:-minimal}"
+    
+    case "$command" in
+        --help|-h)
+            show_banner
+            show_usage
+            ;;
+        --analyze)
+            show_banner
+            analyze_current
+            ;;
+        --test)
+            show_banner
+            test_installation
+            ;;
+        --uninstall)
+            show_banner
+            uninstall
+            ;;
+        minimal|developer|devops|data-science|security|complete)
+            show_banner
+            info "Installation du profil: $command"
+            install_profile "$command"
+            echo
+            success "🎉 Installation terminée!"
+            echo
+            echo -e "${YELLOW}Prochaines étapes:${NC}"
+            echo "  source ~/.zshrc     # Activer la nouvelle configuration"
+            echo "  commands            # Voir toutes les commandes disponibles"
+            echo "  sp                  # Tester le project switcher"
+            ;;
+        *)
+            show_banner
+            error "Commande ou profil inconnu: $command"
+            echo
+            show_usage
+            exit 1
+            ;;
+    esac
+}
+
+# Vérifications préalables
+if [[ ! -d "$DOTFILES_DIR" ]]; then
+    error "Dotfiles non trouvés dans: $DOTFILES_DIR"
+    exit 1
+fi
+
+main "$@"

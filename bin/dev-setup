@@ -1,0 +1,109 @@
+#!/bin/bash
+
+# ===============================
+# 🛠️ DEV SETUP V4
+# ===============================
+
+project_type="${1:-auto}"
+project_name="${2:-$(basename $(pwd))}"
+
+echo "🚀 Setting up development environment..."
+echo "📁 Project: $project_name"
+echo "🔧 Type: $project_type"
+
+# Auto-detect project type
+if [[ "$project_type" == "auto" ]]; then
+    if [[ -f "package.json" ]]; then
+        project_type="node"
+    elif [[ -f "Cargo.toml" ]]; then
+        project_type="rust"
+    elif [[ -f "go.mod" ]]; then
+        project_type="go"
+    elif [[ -f "pyproject.toml" ]] || [[ -f "requirements.txt" ]]; then
+        project_type="python"
+    elif [[ -f "pom.xml" ]]; then
+        project_type="java"
+    else
+        project_type="generic"
+    fi
+    echo "🔍 Auto-detected: $project_type"
+fi
+
+# Setup commands based on project type
+case "$project_type" in
+    node)
+        echo "📦 Node.js project detected"
+        if [[ ! -d "node_modules" ]]; then
+            echo "Installing dependencies..."
+            if command -v pnpm >/dev/null 2>&1; then
+                pnpm install
+            else
+                npm install
+            fi
+        fi
+        
+        echo "🚀 Available scripts:"
+        if command -v jq >/dev/null 2>&1 && [[ -f "package.json" ]]; then
+            jq -r '.scripts | keys[]' package.json 2>/dev/null | sed 's/^/  - npm run /'
+        fi
+        ;;
+    rust)
+        echo "🦀 Rust project detected"
+        echo "🚀 Available commands:"
+        echo "  - cargo run"
+        echo "  - cargo build"
+        echo "  - cargo test"
+        echo "  - cargo watch -x run"
+        ;;
+    go)
+        echo "🐹 Go project detected"
+        echo "🚀 Available commands:"
+        echo "  - go run ."
+        echo "  - go build"
+        echo "  - go test"
+        ;;
+    python)
+        echo "🐍 Python project detected"
+        if [[ ! -d "venv" ]] && [[ ! -d ".venv" ]]; then
+            echo "Creating virtual environment..."
+            python3 -m venv venv
+        fi
+        echo "🚀 Available commands:"
+        echo "  - source venv/bin/activate"
+        echo "  - python main.py"
+        echo "  - pip install -r requirements.txt"
+        ;;
+    java)
+        echo "☕ Java project detected"
+        echo "🚀 Available commands:"
+        echo "  - mvn compile"
+        echo "  - mvn test"
+        echo "  - mvn exec:java"
+        ;;
+    generic)
+        echo "📁 Generic project"
+        echo "🚀 Common commands:"
+        echo "  - git status"
+        echo "  - ls -la"
+        ;;
+esac
+
+# Start tmux session if requested
+if [[ "$3" == "--tmux" ]]; then
+    session_name="dev-$project_name"
+    if ! tmux has-session -t "$session_name" 2>/dev/null; then
+        tmux new-session -d -s "$session_name"
+        tmux split-window -h -p 50
+        tmux split-window -v -p 50  
+        tmux select-pane -t 0
+        tmux split-window -v -p 50
+        tmux select-pane -t 0
+        
+        tmux send-keys -t "$session_name:0.0" 'nvim .' C-m
+        tmux send-keys -t "$session_name:0.2" 'git status' C-m
+    fi
+    
+    tmux attach-session -t "$session_name"
+fi
+
+echo "✅ Development environment ready!"

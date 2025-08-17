@@ -1,0 +1,91 @@
+#!/bin/bash
+
+# ===============================
+# 🔄 PROJECT SWITCHER V4
+# ===============================
+
+if ! command -v fzf &>/dev/null; then
+    echo "❌ fzf non installé"
+    exit 1
+fi
+
+project_dirs=("$HOME/projects" "$HOME/business" "$HOME/work" "$HOME/dev")
+existing_dirs=()
+
+for dir in "${project_dirs[@]}"; do
+    [[ -d "$dir" ]] && existing_dirs+=("$dir")
+done
+
+if [[ ${#existing_dirs[@]} -eq 0 ]]; then
+    echo "❌ Aucun dossier projet trouvé"
+    exit 1
+fi
+
+echo "🔍 Recherche de projets..."
+
+project_dir=$({ 
+    for dir in "${existing_dirs[@]}"; do
+        # Projets avec marqueurs
+        find "$dir" -maxdepth 3 -type d \( -name 'node_modules' -o -name 'target' \) -prune -o \
+             -type f \( -name "package.json" -o -name "Cargo.toml" -o -name "go.mod" \
+                        -o -name "pyproject.toml" -o -name "requirements.txt" -o -name "Pipfile" \) \
+             -exec dirname {} \; 2>/dev/null | grep -v -E '(node_modules|target)'
+        # Dossiers .git
+        find "$dir" -maxdepth 3 -type d -name '.git' -exec dirname {} \; 2>/dev/null
+        # Dossiers directs
+        find "$dir" -mindepth 1 -maxdepth 1 -type d ! -name 'node_modules' ! -name '.*' 2>/dev/null
+    done
+} | sort | uniq | \
+  fzf --height 40% --prompt="🚀 Projet: " \
+      --preview="echo '📁 {}' && ls -la --color=always {} 2>/dev/null | head -10")
+
+if [[ -n "$project_dir" ]]; then
+    cd "$project_dir"
+    echo "✅ Navigation vers: $project_dir"
+    command -v zoxide >/dev/null && zoxide add "$project_dir"
+    
+    # Auto-start tmux session
+    session_name=$(basename "$project_dir")
+    
+    if command -v tmux >/dev/null 2>&1; then
+        if tmux has-session -t "$session_name" 2>/dev/null; then
+            echo "✅ Session '$session_name' exists - attaching..."
+            tmux attach-session -t "$session_name"
+        else
+            echo "🚀 Creating new dev session: $session_name"
+            
+            # Create tmux session with IDE layout
+            tmux new-session -d -s "$session_name" -c "$project_dir"
+            tmux split-window -h -p 50
+            tmux split-window -v -p 50  
+            tmux select-pane -t 0
+            tmux split-window -v -p 50
+            tmux select-pane -t 0
+            
+            # Setup commands based on project type
+            if [[ -f "$project_dir/package.json" ]]; then
+                tmux send-keys -t "$session_name:0.0" 'nvim .' C-m
+                tmux send-keys -t "$session_name:0.1" 'npm run dev' 
+            elif [[ -f "$project_dir/Cargo.toml" ]]; then
+                tmux send-keys -t "$session_name:0.0" 'nvim .' C-m
+                tmux send-keys -t "$session_name:0.1" 'cargo run'
+            elif [[ -f "$project_dir/go.mod" ]]; then
+                tmux send-keys -t "$session_name:0.0" 'nvim .' C-m
+                tmux send-keys -t "$session_name:0.1" 'go run .'
+            else
+                tmux send-keys -t "$session_name:0.0" 'nvim .' C-m
+                tmux send-keys -t "$session_name:0.1" "echo '🚀 Project: $session_name'" C-m
+            fi
+            
+            # Git status in third pane
+            tmux send-keys -t "$session_name:0.2" 'git status' C-m
+            
+            # Attach to session
+            tmux attach-session -t "$session_name"
+        fi
+    else
+        echo "⚠️ tmux not installed - staying in directory"
+    fi
+else
+    echo "❌ Aucun projet sélectionné"
+fi
