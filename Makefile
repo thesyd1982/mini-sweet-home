@@ -4,8 +4,8 @@
 
 # Installation par défaut
 install:
-	@echo "🚀 Installation dotfiles V4..."
-	@./install minimal
+	@echo "🏠 Installation Mini Sweet Home..."
+	@./install
 
 # Installation avec profils
 minimal:
