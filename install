@@ -5,6 +5,22 @@ echo "================================"
 
 DOTFILES_DIR="$HOME/mini-sweet-home"
 
+echo "🐊 Setting ZSH as default shell..."
+if [[ "$SHELL" != */zsh ]]; then
+    if command -v zsh >/dev/null 2>&1; then
+        echo "Changing shell to ZSH..."
+        chsh -s $(which zsh)
+        echo "✅ Shell changed to ZSH (restart terminal to apply)"
+    else
+        echo "⚠️ ZSH not found, please install it first"
+        echo "Ubuntu/Debian: sudo apt install zsh"
+        echo "macOS: brew install zsh"
+        exit 1
+    fi
+else
+    echo "✅ ZSH already default shell"
+fi
+
 echo "📁 Creating symlinks..."
 
 # ZSH
