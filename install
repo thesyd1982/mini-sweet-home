@@ -66,13 +66,6 @@ create_symlinks() {
     
     # Sauvegarde
     mkdir -p "$BACKUP_DIR"
-    local configs=(".zshrc" ".tmux.conf" ".gitconfig" ".config/nvim")
-    for config in "${configs[@]}"; do
-        if [[ -e "$HOME/$config" && ! -L "$HOME/$config" ]]; then
-            cp -r "$HOME/$config" "$BACKUP_DIR/" 2>/dev/null || true
-            info "Sauvegardé: $config"
-        fi
-    done
     
     # Liens symboliques
     local links_created=0
@@ -81,26 +74,26 @@ create_symlinks() {
     [[ -e "$HOME/.zshrc" ]] && rm -f "$HOME/.zshrc"
     ln -sf "$DOTFILES_DIR/configs/shell/zsh/zshrc" "$HOME/.zshrc"
     success "Lié: ~/.zshrc"
-    let links_created+=1
+    links_created=$((links_created + 1))
     
     # Tmux
     [[ -e "$HOME/.tmux.conf" ]] && rm -f "$HOME/.tmux.conf"
     ln -sf "$DOTFILES_DIR/configs/tmux/tmux.conf" "$HOME/.tmux.conf"
     success "Lié: ~/.tmux.conf"
-    let links_created+=1
+    links_created=$((links_created + 1))
     
     # Git
     [[ -e "$HOME/.gitconfig" ]] && rm -f "$HOME/.gitconfig"
     ln -sf "$DOTFILES_DIR/configs/git/gitconfig" "$HOME/.gitconfig"
     success "Lié: ~/.gitconfig"
-    let links_created+=1
+    links_created=$((links_created + 1))
     
     # Neovim
     mkdir -p "$HOME/.config"
     [[ -e "$HOME/.config/nvim" ]] && rm -rf "$HOME/.config/nvim"
     ln -sf "$DOTFILES_DIR/configs/nvim" "$HOME/.config/nvim"
     success "Lié: ~/.config/nvim"
-    let links_created+=1
+    links_created=$((links_created + 1))
     
     # Cache directories
     mkdir -p "$HOME/.cache/zsh"
