@@ -1,5 +1,5 @@
 # ===============================
-# 🚀 DOTFILES V4 - ALIASES
+# 🏠 MINI SWEET HOME - ALIASES
 # ===============================
 
 # ===============================
@@ -8,6 +8,11 @@
 alias v='nvim'
 alias vi='nvim'
 alias vim='nvim'
+
+# ===============================
+# ⚡ MINI SWEET HOME TOOLS
+# ===============================
+alias bench='benchmark'
 alias vzc='nvim ~/dotfiles/configs/shell/zsh/zshrc'
 alias vnv='nvim ~/.config/nvim'
 alias vtm='nvim ~/dotfiles/configs/tmux/tmux.conf'
@@ -326,7 +331,7 @@ alias paste='xclip -selection clipboard -o'
 # ===============================
 # ⏰ PRODUCTIVITY
 # ===============================
-alias bench='~/dotfiles/bin/benchmark'  # Benchmark dotfiles performance
+alias bench='benchmark'  # Mini Sweet Home benchmark
 alias week='date +%V'
 alias path='echo $PATH | tr ":" "\n"'
 alias env='env | sort'

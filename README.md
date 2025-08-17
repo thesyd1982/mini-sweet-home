@@ -1,8 +1,8 @@
-# 🚀 Dotfiles V4 - Configuration Portable Intelligente
+# 🏠 Mini Sweet Home - Cozy Development Environment
 
-> **Setup hyperminimaliste et portable pour développeur avec workflow optimisé**
+> **Your personal coding sanctuary with Rose Pine theme**
 > 
-> ✨ **Structure V4:** Organisation parfaite • Installation simplifiée • Scripts réutilisables
+> ✨ **Performance:** 100/100 benchmark score • 73ms ZSH startup • 15ms tmux • 22ms nvim
 
 [![Version](https://img.shields.io/badge/version-4.0.0-blue.svg)](https://github.com/votre-username/dotfiles)
 [![OS Support](https://img.shields.io/badge/OS-Ubuntu%20%7C%20Debian%20%7C%20Fedora%20%7C%20Arch%20%7C%20macOS-green.svg)](#)

@@ -1,9 +1,9 @@
 # ===============================
-# ⚡ CLEAN ENVIRONMENT (VI MODE STABLE)
+# 🏠 MINI SWEET HOME ENVIRONMENT
 # ===============================
 
-# PATH (CLEAN)
-export PATH="$HOME/bin:/usr/local/bin:$HOME/.tmuxifier/bin:$HOME/.local/bin:/usr/local/go/bin:$HOME/go/bin:$HOME/dotfiles/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+# PATH (with Mini Sweet Home bin)
+export PATH="$HOME/mini-sweet-home/bin:$HOME/bin:/usr/local/bin:$HOME/.tmuxifier/bin:$HOME/.local/bin:/usr/local/go/bin:$HOME/go/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
 # Essential environment
 export EDITOR='nvim'

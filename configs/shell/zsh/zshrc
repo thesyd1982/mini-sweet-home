@@ -1,9 +1,9 @@
 # ===============================
-# ⚡ DOTFILES V4 - ZSH CONFIG
+# 🏠 MINI SWEET HOME - ZSH CONFIG
 # ===============================
 
 # Charger les configurations modulaires
-source ~/dotfiles/configs/shell/zsh/exports.zsh
-source ~/dotfiles/configs/shell/zsh/aliases.zsh
-source ~/dotfiles/configs/shell/zsh/functions.zsh
-source ~/dotfiles/configs/shell/zsh/prompt.zsh
+source ~/mini-sweet-home/configs/shell/zsh/exports.zsh
+source ~/mini-sweet-home/configs/shell/zsh/aliases.zsh
+source ~/mini-sweet-home/configs/shell/zsh/functions.zsh
+source ~/mini-sweet-home/configs/shell/zsh/prompt.zsh
