@@ -4,7 +4,7 @@
 # 🚀 MINI SWEET HOME - INSTALLER PRINCIPAL
 # ===============================
 
-set -euo pipefail
+set -eo pipefail
 
 readonly DOTFILES_DIR="$HOME/mini-sweet-home"
 readonly BACKUP_DIR="$HOME/.dotfiles_backup_$(date +%Y%m%d_%H%M%S)"
