@@ -81,26 +81,26 @@ create_symlinks() {
     [[ -e "$HOME/.zshrc" ]] && rm -f "$HOME/.zshrc"
     ln -sf "$DOTFILES_DIR/configs/shell/zsh/zshrc" "$HOME/.zshrc"
     success "Lié: ~/.zshrc"
-    ((links_created++))
+    let links_created+=1
     
     # Tmux
     [[ -e "$HOME/.tmux.conf" ]] && rm -f "$HOME/.tmux.conf"
     ln -sf "$DOTFILES_DIR/configs/tmux/tmux.conf" "$HOME/.tmux.conf"
     success "Lié: ~/.tmux.conf"
-    ((links_created++))
+    let links_created+=1
     
     # Git
     [[ -e "$HOME/.gitconfig" ]] && rm -f "$HOME/.gitconfig"
     ln -sf "$DOTFILES_DIR/configs/git/gitconfig" "$HOME/.gitconfig"
     success "Lié: ~/.gitconfig"
-    ((links_created++))
+    let links_created+=1
     
     # Neovim
     mkdir -p "$HOME/.config"
     [[ -e "$HOME/.config/nvim" ]] && rm -rf "$HOME/.config/nvim"
     ln -sf "$DOTFILES_DIR/configs/nvim" "$HOME/.config/nvim"
     success "Lié: ~/.config/nvim"
-    ((links_created++))
+    let links_created+=1
     
     # Cache directories
     mkdir -p "$HOME/.cache/zsh"
