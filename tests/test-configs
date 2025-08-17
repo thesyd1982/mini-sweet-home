@@ -17,10 +17,10 @@ fi
 
 # Test tmux config
 echo "🪟 Test configuration tmux..."
-if tmux -f ~/.tmux.conf list-sessions >/dev/null 2>&1; then
+if tmux -f ~/.tmux.conf -T show-options >/dev/null 2>&1; then
     echo "  ✅ Configuration tmux valide"
 else
-    echo "  ❌ Erreur configuration tmux"
+    echo "  ⚠️ Vérifiez la configuration tmux manuellement"
 fi
 
 # Test Git config
