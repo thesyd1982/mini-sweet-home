@@ -48,4 +48,5 @@ echo "✅ Linked: ~/.config/nvim"
 mkdir -p ~/.cache/zsh
 
 echo "🎉 Installation complete!"
-echo "Run: source ~/.zshrc"
+echo "Run: exec zsh  (to start ZSH immediately)"
+echo "Or restart terminal for permanent ZSH"
