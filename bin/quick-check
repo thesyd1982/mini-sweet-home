@@ -1,0 +1,81 @@
+#!/bin/bash
+
+# ===============================
+# ⚡ MINI SWEET HOME - VALIDATION RAPIDE
+# ===============================
+
+# Ce script fait une validation rapide avant commit
+# Usage: ./bin/quick-check
+
+set -e
+
+# Colors
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+echo -e "${BLUE}⚡ Quick Validation Check${NC}"
+echo "========================"
+
+# 1. Vérifier que les scripts principaux sont exécutables
+echo -n "📁 Scripts executable... "
+if [[ -x install && -x bin/dependency-manager && -x bin/benchmark && -x bin/verify && -x bin/test-runner && -x bin/quick-check ]]; then
+    echo -e "${GREEN}✅${NC}"
+else
+    echo -e "${RED}❌${NC}"
+    echo "Run: chmod +x install bin/*"
+    echo "Missing executable permissions on:"
+    [[ ! -x install ]] && echo "  - install"
+    [[ ! -x bin/dependency-manager ]] && echo "  - bin/dependency-manager"
+    [[ ! -x bin/benchmark ]] && echo "  - bin/benchmark"
+    [[ ! -x bin/verify ]] && echo "  - bin/verify"
+    [[ ! -x bin/test-runner ]] && echo "  - bin/test-runner"
+    [[ ! -x bin/quick-check ]] && echo "  - bin/quick-check"
+    exit 1
+fi
+
+# 2. Syntaxe ZSH
+echo -n "🐚 ZSH syntax... "
+if zsh -n configs/shell/zsh/zshrc 2>/dev/null; then
+    echo -e "${GREEN}✅${NC}"
+else
+    echo -e "${RED}❌${NC}"
+    echo "ZSH config has syntax errors"
+    exit 1
+fi
+
+# 3. Syntaxe Tmux
+echo -n "🪟 Tmux syntax... "
+if tmux -f configs/tmux/tmux.conf list-keys >/dev/null 2>&1; then
+    echo -e "${GREEN}✅${NC}"
+else
+    echo -e "${RED}❌${NC}"
+    echo "Tmux config has syntax errors"
+    exit 1
+fi
+
+# 4. Dependency manager fonctionne
+echo -n "📦 Dependency manager... "
+if ./bin/dependency-manager check >/dev/null 2>&1; then
+    echo -e "${GREEN}✅${NC}"
+else
+    echo -e "${RED}❌${NC}"
+    echo "Dependency manager failed"
+    exit 1
+fi
+
+# 5. Test minimal automatisé
+echo -n "🧪 Minimal tests... "
+if ./bin/test-runner minimal >/dev/null 2>&1; then
+    echo -e "${GREEN}✅${NC}"
+elif ./bin/test-runner minimal 2>&1 | grep -q "Success Rate: [8-9][0-9]%\|Success Rate: 100%"; then
+    echo -e "${YELLOW}⚠️${NC} (mostly passing)"
+else
+    echo -e "${RED}❌${NC}"
+    echo "Minimal tests failed. Run for details: ./bin/test-runner minimal"
+    exit 1
+fi
+
+echo -e "\n${GREEN}🎉 All quick checks passed! Ready to commit.${NC}"

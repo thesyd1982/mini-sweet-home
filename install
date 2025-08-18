@@ -1,52 +1,387 @@
 #!/bin/bash
 
-echo "🏠 Mini Sweet Home Installation"
-echo "================================"
+# ===============================
+# 🏠 MINI SWEET HOME - INSTALLATION ROBUSTE
+# ===============================
+
+set -e  # Exit on error
+
+# Colors and logging
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+WHITE='\033[1;37m'
+NC='\033[0m' # No Color
+
+log() { echo -e "${BLUE}[INFO]${NC} $1"; }
+success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
+warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+error() { echo -e "${RED}[ERROR]${NC} $1"; }
+
+# Banner
+echo -e "${PURPLE}"
+cat << "EOF"
+🏠 MINI SWEET HOME
+===================
+Robust Development Environment Setup
+EOF
+echo -e "${NC}"
 
 DOTFILES_DIR="$HOME/mini-sweet-home"
 
-echo "🐊 Setting ZSH as default shell..."
-if [[ "$SHELL" != */zsh ]]; then
-    if command -v zsh >/dev/null 2>&1; then
-        echo "Changing shell to ZSH..."
-        chsh -s $(which zsh)
-        echo "✅ Shell changed to ZSH (restart terminal to apply)"
+# ===============================
+# 🔍 SYSTEM DETECTION
+# ===============================
+detect_os() {
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        echo "macos"
+    elif [[ -f /etc/os-release ]]; then
+        . /etc/os-release
+        case "$ID" in
+            ubuntu|debian) echo "ubuntu" ;;
+            fedora|rhel|centos) echo "fedora" ;;
+            arch|manjaro) echo "arch" ;;
+            *) echo "linux" ;;
+        esac
     else
-        echo "⚠️ ZSH not found, please install it first"
-        echo "Ubuntu/Debian: sudo apt install zsh"
-        echo "macOS: brew install zsh"
+        echo "unknown"
+    fi
+}
+
+check_command() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# ===============================
+# 📦 PACKAGE MANAGER FUNCTIONS
+# ===============================
+install_package() {
+    local package=$1
+    case "$OS" in
+        ubuntu)
+            if ! dpkg -l | grep -q "^ii  $package "; then
+                log "Installing $package via apt..."
+                sudo apt update -qq && sudo apt install -y "$package"
+            else
+                log "$package already installed"
+            fi
+            ;;
+        fedora)
+            if ! rpm -q "$package" >/dev/null 2>&1; then
+                log "Installing $package via dnf..."
+                sudo dnf install -y "$package"
+            else
+                log "$package already installed"
+            fi
+            ;;
+        arch)
+            if ! pacman -Q "$package" >/dev/null 2>&1; then
+                log "Installing $package via pacman..."
+                sudo pacman -S --noconfirm "$package"
+            else
+                log "$package already installed"
+            fi
+            ;;
+        macos)
+            if ! brew list "$package" >/dev/null 2>&1; then
+                log "Installing $package via brew..."
+                brew install "$package"
+            else
+                log "$package already installed"
+            fi
+            ;;
+        *)
+            warn "Cannot install $package: unsupported OS"
+            return 1
+            ;;
+    esac
+}
+
+# ===============================
+# 🦀 RUST INSTALLATION
+# ===============================
+install_rust() {
+    if ! check_command cargo; then
+        log "Installing Rust (rustup + cargo)..."
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        source "$HOME/.cargo/env"
+        success "Rust installed successfully"
+    else
+        log "Rust already installed ($(rustc --version))"
+    fi
+}
+
+install_rust_tool() {
+    local tool="$1"
+    local crate="${2:-$tool}"
+    
+    if ! check_command "$tool"; then
+        if check_command cargo; then
+            log "Installing $tool via cargo..."
+            cargo install "$crate" --quiet
+            if check_command "$tool"; then
+                success "$tool installed successfully"
+            else
+                warn "$tool installation may have failed"
+            fi
+        else
+            warn "Cargo not available, cannot install $tool"
+            return 1
+        fi
+    else
+        log "$tool already available"
+    fi
+}
+
+# ===============================
+# 🐹 GO INSTALLATION  
+# ===============================
+install_go() {
+    if ! check_command go; then
+        log "Installing Go..."
+        case "$OS" in
+            ubuntu|fedora|arch)
+                GO_VERSION="1.21.5"
+                wget -q "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" -O /tmp/go.tar.gz
+                sudo rm -rf /usr/local/go
+                sudo tar -C /usr/local -xzf /tmp/go.tar.gz
+                rm /tmp/go.tar.gz
+                # Add to PATH in current session
+                export PATH=$PATH:/usr/local/go/bin
+                ;;
+            macos)
+                install_package go
+                ;;
+        esac
+        success "Go installed successfully"
+    else
+        log "Go already installed ($(go version))"
+    fi
+}
+
+# ===============================
+# 🎯 NEOVIM INSTALLATION
+# ===============================
+install_neovim() {
+    if ! check_command nvim; then
+        log "Installing Neovim..."
+        case "$OS" in
+            ubuntu)
+                # Install latest stable via PPA for Ubuntu
+                if ! grep -q "neovim-ppa/stable" /etc/apt/sources.list.d/* 2>/dev/null; then
+                    sudo add-apt-repository ppa:neovim-ppa/stable -y
+                    sudo apt update
+                fi
+                install_package neovim
+                ;;
+            fedora)
+                install_package neovim
+                ;;
+            arch)
+                install_package neovim
+                ;;
+            macos)
+                install_package neovim
+                ;;
+            *)
+                # Fallback: AppImage for Linux
+                log "Using Neovim AppImage fallback..."
+                mkdir -p "$HOME/.local/bin"
+                curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim.appimage
+                chmod +x nvim.appimage
+                mv nvim.appimage "$HOME/.local/bin/nvim"
+                ;;
+        esac
+        success "Neovim installed successfully"
+    else
+        log "Neovim already installed ($(nvim --version | head -1))"
+    fi
+}
+
+# ===============================
+# 🛠️ MODERN TOOLS INSTALLATION
+# ===============================
+install_modern_tools() {
+    log "Installing modern CLI tools..."
+    
+    # Install via package manager first
+    case "$OS" in
+        ubuntu)
+            install_package ripgrep
+            install_package fd-find
+            # For Ubuntu, fd is called fdfind
+            if [[ ! -L "$HOME/.local/bin/fd" ]] && check_command fdfind; then
+                mkdir -p "$HOME/.local/bin"
+                ln -sf "$(which fdfind)" "$HOME/.local/bin/fd"
+            fi
+            ;;
+        fedora)
+            install_package ripgrep
+            install_package fd-find
+            ;;
+        arch)
+            install_package ripgrep
+            install_package fd
+            install_package exa
+            install_package bat
+            install_package dust
+            ;;
+        macos)
+            install_package ripgrep
+            install_package fd
+            install_package exa
+            install_package bat
+            install_package dust
+            ;;
+    esac
+
+    # Install Rust-based tools if Rust is available
+    if check_command cargo; then
+        install_rust_tool exa
+        install_rust_tool bat
+        install_rust_tool dust du-dust
+        install_rust_tool btop
+    else
+        warn "Cargo not available, skipping Rust-based tools"
+    fi
+
+    # fzf
+    if ! check_command fzf; then
+        log "Installing fzf..."
+        git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+        ~/.fzf/install --all --no-bash --no-fish
+    fi
+
+    # zoxide
+    if ! check_command zoxide; then
+        log "Installing zoxide..."
+        curl -sS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash
+    fi
+}
+
+# ===============================
+# 🐚 SHELL SETUP
+# ===============================
+setup_shell() {
+    log "Setting up ZSH..."
+    
+    # Install ZSH if needed
+    if ! check_command zsh; then
+        install_package zsh
+    fi
+    
+    # Change default shell if needed
+    if [[ "$SHELL" != */zsh ]]; then
+        log "Changing default shell to ZSH..."
+        chsh -s "$(which zsh)"
+        success "Shell changed to ZSH (restart terminal to apply)"
+    else
+        log "ZSH already default shell"
+    fi
+
+    # Install ZSH plugins
+    if [[ ! -d "$HOME/.zsh-syntax-highlighting" ]]; then
+        log "Installing zsh-syntax-highlighting..."
+        git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$HOME/.zsh-syntax-highlighting"
+    fi
+
+    if [[ ! -d "$HOME/.zsh-autosuggestions" ]]; then
+        log "Installing zsh-autosuggestions..."
+        git clone https://github.com/zsh-users/zsh-autosuggestions "$HOME/.zsh-autosuggestions"
+    fi
+}
+
+# ===============================
+# 🪟 TMUX SETUP
+# ===============================
+setup_tmux() {
+    log "Setting up Tmux..."
+    
+    if ! check_command tmux; then
+        install_package tmux
+    fi
+
+    # Install TPM
+    if [[ ! -d "$HOME/.tmux/plugins/tpm" ]]; then
+        log "Installing TPM (Tmux Plugin Manager)..."
+        git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
+    fi
+}
+
+# ===============================
+# 🔗 SYMLINK CREATION
+# ===============================
+create_symlinks() {
+    log "Creating configuration symlinks..."
+
+    # ZSH
+    rm -f ~/.zshrc
+    ln -sf "$DOTFILES_DIR/configs/shell/zsh/zshrc" ~/.zshrc
+    log "✅ Linked: ~/.zshrc"
+
+    # Tmux  
+    rm -f ~/.tmux.conf
+    ln -sf "$DOTFILES_DIR/configs/tmux/tmux.conf" ~/.tmux.conf
+    log "✅ Linked: ~/.tmux.conf"
+
+    # Git
+    rm -f ~/.gitconfig
+    ln -sf "$DOTFILES_DIR/configs/git/gitconfig" ~/.gitconfig
+    log "✅ Linked: ~/.gitconfig"
+
+    # Neovim
+    mkdir -p ~/.config
+    rm -rf ~/.config/nvim
+    ln -sf "$DOTFILES_DIR/configs/nvim" ~/.config/nvim
+    log "✅ Linked: ~/.config/nvim"
+
+    # Create cache directories
+    mkdir -p ~/.cache/zsh
+    mkdir -p ~/.local/bin
+}
+
+# ===============================
+# 🚀 MAIN INSTALLATION FLOW
+# ===============================
+main() {
+    OS=$(detect_os)
+    log "Detected OS: $OS"
+    
+    # Ensure we're in the right directory
+    if [[ ! -d "$DOTFILES_DIR" ]]; then
+        error "Mini Sweet Home directory not found at $DOTFILES_DIR"
         exit 1
     fi
-else
-    echo "✅ ZSH already default shell"
-fi
+    
+    log "Starting robust installation..."
+    
+    # Install core tools first
+    install_rust
+    install_go
+    install_neovim
+    install_modern_tools
+    setup_shell
+    setup_tmux
+    
+    # Create symlinks
+    create_symlinks
+    
+    # Make binaries executable
+    find "$DOTFILES_DIR/bin" -type f -exec chmod +x {} \;
+    
+    success "🎉 Mini Sweet Home installation complete!"
+    echo
+    echo -e "${CYAN}Next steps:${NC}"
+    echo "1. Run: ${WHITE}exec zsh${NC} (to start ZSH immediately)"
+    echo "2. Or restart your terminal for permanent ZSH"
+    echo "3. Run: ${WHITE}benchmark${NC} to test performance"
+    echo "4. Enjoy your new development environment! 🚀"
+    echo
+    echo -e "${CYAN}💡 Tip:${NC} Run ${WHITE}./bin/dependency-manager check${NC} to see what's installed"
+}
 
-echo "📁 Creating symlinks..."
-
-# ZSH
-rm -f ~/.zshrc
-ln -sf "$DOTFILES_DIR/configs/shell/zsh/zshrc" ~/.zshrc
-echo "✅ Linked: ~/.zshrc"
-
-# Tmux  
-rm -f ~/.tmux.conf
-ln -sf "$DOTFILES_DIR/configs/tmux/tmux.conf" ~/.tmux.conf
-echo "✅ Linked: ~/.tmux.conf"
-
-# Git
-rm -f ~/.gitconfig
-ln -sf "$DOTFILES_DIR/configs/git/gitconfig" ~/.gitconfig
-echo "✅ Linked: ~/.gitconfig"
-
-# Neovim
-mkdir -p ~/.config
-rm -rf ~/.config/nvim
-ln -sf "$DOTFILES_DIR/configs/nvim" ~/.config/nvim
-echo "✅ Linked: ~/.config/nvim"
-
-# Cache
-mkdir -p ~/.cache/zsh
-
-echo "🎉 Installation complete!"
-echo "Run: exec zsh  (to start ZSH immediately)"
-echo "Or restart terminal for permanent ZSH"
+# Run main function
+main "$@"

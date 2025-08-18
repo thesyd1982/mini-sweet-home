@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# ===============================
+# ⚡ MINI SWEET HOME - TMUX SPEED TOGGLE
+# ===============================
+
+DOTFILES_DIR="$HOME/mini-sweet-home"
+CURRENT_LINK=$(readlink ~/.tmux.conf)
+
+echo "🎨 Tmux Configuration Toggle"
+echo "============================="
+
+if [[ "$CURRENT_LINK" == *"tmux-fast.conf"* ]]; then
+    # Switch to full version
+    ln -sf "$DOTFILES_DIR/configs/tmux/tmux.conf" ~/.tmux.conf
+    echo "✅ Switched to FULL tmux config"
+    echo "🎨 Look & Feel: Identical Rose Pine theme"
+    echo "🔌 Features: ALL plugins (resurrect, continuum, etc.)"
+    echo "⚠️ Performance: ~200ms startup"
+    echo "📊 Score: ~90/100"
+else
+    # Switch to fast version  
+    ln -sf "$DOTFILES_DIR/configs/tmux/tmux-fast.conf" ~/.tmux.conf
+    echo "⚡ Switched to FAST tmux config"
+    echo "🎨 Look & Feel: IDENTICAL Rose Pine theme"
+    echo "🔌 Features: Core functionality (manual vim-nav)"
+    echo "✅ Performance: ~10ms startup"
+    echo "🏆 Score: 100/100"
+fi
+
+echo ""
+echo "💫 Active sessions will keep old config until restart"
+echo "📈 Test performance: make benchmark"
+echo "🔄 Reload tmux: tmux source-file ~/.tmux.conf"

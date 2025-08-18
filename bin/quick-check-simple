@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# ===============================
+# ⚡ MINI SWEET HOME - VALIDATION RAPIDE (VERSION SIMPLE)
+# ===============================
+
+# Colors
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+echo -e "${BLUE}⚡ Quick Validation Check (Simple)${NC}"
+echo "=========================="
+
+# 1. Scripts exécutables
+echo -n "📁 Scripts executable... "
+if [[ -x install && -x bin/dependency-manager && -x bin/benchmark ]]; then
+    echo -e "${GREEN}✅${NC}"
+else
+    echo -e "${RED}❌${NC}"
+    echo "Run: chmod +x install bin/*"
+    exit 1
+fi
+
+# 2. Syntaxe ZSH
+echo -n "🐚 ZSH syntax... "
+if zsh -n configs/shell/zsh/zshrc 2>/dev/null; then
+    echo -e "${GREEN}✅${NC}"
+else
+    echo -e "${RED}❌${NC}"
+    echo "ZSH config has syntax errors"
+    exit 1
+fi
+
+# 3. Syntaxe Tmux
+echo -n "🪟 Tmux syntax... "
+if tmux -f configs/tmux/tmux.conf list-keys >/dev/null 2>&1; then
+    echo -e "${GREEN}✅${NC}"
+else
+    echo -e "${RED}❌${NC}"
+    echo "Tmux config has syntax errors"
+    exit 1
+fi
+
+# 4. Dependency manager fonctionne
+echo -n "📦 Dependency manager... "
+if ./bin/dependency-manager check >/dev/null 2>&1; then
+    echo -e "${GREEN}✅${NC}"
+else
+    echo -e "${RED}❌${NC}"
+    echo "Dependency manager failed"
+    exit 1
+fi
+
+echo -e "\n${GREEN}🎉 All essential checks passed! Core system is healthy.${NC}"
+echo -e "${BLUE}💡 For full testing run: make test-minimal${NC}"

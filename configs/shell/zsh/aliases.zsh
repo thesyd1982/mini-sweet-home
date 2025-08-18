@@ -1,84 +1,193 @@
 # ===============================
-# 🏠 MINI SWEET HOME - ALIASES
+# 🏠 MINI SWEET HOME - ALIASES INTELLIGENTS
 # ===============================
 
 # ===============================
-# 📝 EDITORS
+# 🛡️ SMART TOOL DETECTION & FALLBACKS
 # ===============================
-alias v='nvim'
-alias vi='nvim'
-alias vim='nvim'
+
+# Function to check if command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Smart ls replacement (exa -> ls fallback)
+if command_exists exa; then
+    alias ls='exa --color=always --group-directories-first'
+    alias ll='exa -la --color=always --group-directories-first'
+    alias la='exa -a --color=always --group-directories-first'
+    alias lt='exa -T --color=always --group-directories-first'
+    alias tree='exa -T --color=always --group-directories-first'
+    alias l='exa -l'
+    alias lall='exa -la'
+    alias lh='exa -lah'
+    alias ltime='exa -lt modified'
+    alias lr='exa -lR'
+else
+    # Fallback to traditional ls with colors
+    if ls --color=auto >/dev/null 2>&1; then
+        alias ls='ls --color=auto'
+        alias ll='ls -la --color=auto'
+        alias la='ls -a --color=auto'
+    else
+        alias ls='ls -G'  # macOS
+        alias ll='ls -la -G'
+        alias la='ls -a -G'
+    fi
+    alias lt='ls -la'
+    alias tree='find . -type d | sed -e "s/[^-][^\/]*\//  |/g" -e "s/|\([^ ]\)/|-\1/"'
+    alias l='ls -l'
+    alias lall='ls -la'
+    alias lh='ls -lah'
+    alias ltime='ls -lat'
+    alias lr='ls -lR'
+fi
+
+# Smart cat replacement (bat -> cat fallback)
+if command_exists bat; then
+    alias cat='bat --paging=never'
+    alias ccat='cat'  # Original cat for piping
+elif command_exists batcat; then  # Ubuntu package name
+    alias cat='batcat --paging=never'
+    alias ccat='cat'
+else
+    alias ccat='cat'  # Keep original
+fi
+
+# Smart file search (fd -> find fallback)
+if command_exists fd; then
+    alias ff='fd'
+    alias find_files='fd'
+elif command_exists fdfind; then  # Ubuntu package name
+    alias ff='fdfind'
+    alias find_files='fdfind'
+else
+    alias ff='find . -name'
+    alias find_files='find . -name'
+fi
+
+# Smart grep (rg -> grep fallback)
+if command_exists rg; then
+    alias grep='rg'
+    alias grepr='rg'
+    alias search='rg -i'
+else
+    alias grep='grep --color=auto'
+    alias grepr='grep -r --color=auto'
+    alias search='grep -ri'
+fi
+
+# Smart disk usage (dust -> du fallback)
+if command_exists dust; then
+    alias du='dust'
+    alias disk='dust'
+    alias dush='dust -d 1'
+else
+    alias disk='du -h --max-depth=1 2>/dev/null || du -h -d 1'
+    alias dush='du -sh'
+fi
+
+# Smart process viewer (btop -> htop -> top fallback)
+if command_exists btop; then
+    alias top='btop'
+    alias htop='btop'
+elif command_exists htop; then
+    alias top='htop'
+else
+    # Keep default top
+    :
+fi
+
+# Smart cd with zoxide fallback
+if command_exists zoxide; then
+    eval "$(zoxide init zsh)"
+    alias cd='z'
+    alias cdi='zi'  # Interactive mode
+    alias cdd='cd'  # Original cd
+else
+    alias cdi='cd'  # No interactive mode available
+    alias cdd='cd'
+fi
 
 # ===============================
-# ⚡ MINI SWEET HOME TOOLS
+# 📝 EDITOR DETECTION & FALLBACKS
+# ===============================
+if command_exists nvim; then
+    alias v='nvim'
+    alias vi='nvim'
+    alias vim='nvim'
+    alias nano='nvim'
+    alias edit='nvim'
+elif command_exists vim; then
+    alias v='vim'
+    alias vi='vim'
+    alias edit='vim'
+    alias nano='vim'
+elif command_exists vi; then
+    alias v='vi'
+    alias vim='vi'
+    alias edit='vi'
+    alias nano='vi'
+else
+    alias v='nano'
+    alias vi='nano'
+    alias vim='nano'
+    alias edit='nano'
+fi
+
+# ===============================
+# ⚡ MINI SWEET HOME SPECIFIC
 # ===============================
 alias bench='benchmark'
-alias vzc='nvim ~/dotfiles/configs/shell/zsh/zshrc'
-alias vnv='nvim ~/.config/nvim'
-alias vtm='nvim ~/dotfiles/configs/tmux/tmux.conf'
-alias vgit='nvim ~/dotfiles/configs/git/gitconfig'
-alias valiases='nvim ~/dotfiles/configs/shell/zsh/aliases.zsh'
-alias vfunctions='nvim ~/dotfiles/configs/shell/zsh/functions.zsh'
-alias nvim-mcp='nvim --listen 0.0.0.0:6666'
+alias vzc='$EDITOR ~/mini-sweet-home/configs/shell/zsh/zshrc'
+alias vnv='$EDITOR ~/.config/nvim'
+alias vtm='$EDITOR ~/mini-sweet-home/configs/tmux/tmux.conf'
+alias vgit='$EDITOR ~/mini-sweet-home/configs/git/gitconfig'
+alias valiases='$EDITOR ~/mini-sweet-home/configs/shell/zsh/aliases.zsh'
+alias vfunctions='$EDITOR ~/mini-sweet-home/configs/shell/zsh/functions.zsh'
+
+# Neovim with MCP (if available)
+if command_exists nvim; then
+    alias nvim-mcp='nvim --listen 0.0.0.0:6666'
+fi
 
 # ===============================
-# 📁 NAVIGATION & FILES
+# 📁 SMART NAVIGATION
 # ===============================
-# Modern file listing
-alias ls='exa --color=always --group-directories-first'
-alias ll='exa -la --color=always --group-directories-first'
-alias la='exa -a --color=always --group-directories-first'
-alias lt='exa -T --color=always --group-directories-first'
-alias tree='exa -T --color=always --group-directories-first'
-
-# Quick navigation
 alias c='clear'
 alias h='history'
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
 
-# Directory operations
+# Directory operations with smart defaults
 alias md='mkdir -p'
 alias rd='rmdir'
 alias mkd='mkdir -p'
-alias take='take_function'
 
-# File operations
+# File operations with confirmations
 alias cp='cp -i'
 alias mv='mv -i'
 alias rm='rm -i'
-alias grep='grep --color=auto'
+
+# System information with smart tools
 alias df='df -h'
-alias du='du -h'
 alias free='free -h'
 
-# Quick file viewing
-alias cat='bat'
-alias less='less -R'
+# Quick file viewing with smart pagination
+if command_exists less; then
+    alias less='less -R'
+fi
+
 alias head='head -n 20'
 alias tail='tail -n 20'
-alias top='btop'
-
-# Quick file editing
-alias nano='nvim'
-alias edit='nvim'
-
-# Directory listing shortcuts
-alias l='exa -l'
-alias lall='exa -la'
-alias lh='exa -lah'
-alias ltime='exa -lt modified'
-alias lr='exa -lR'
-
-# File search
-alias f='find . -name'
-alias ff='fd'
 
 # Archive operations
 alias tarx='tar -xvf'
 alias tarc='tar -cvf'
-alias unzip='unzip -q'
+if command_exists unzip; then
+    alias unzip='unzip -q'
+fi
 
 # Permission shortcuts
 alias chmodx='chmod +x'
@@ -86,252 +195,208 @@ alias perm644='chmod 644'
 alias perm755='chmod 755'
 
 # ===============================
-# 🐙 GIT ALIASES (OH-MY-ZSH COMPLETE)
+# 🐙 GIT ALIASES (ESSENTIAL ONLY)
 # ===============================
-# Basic Git
-alias g='git'
-alias ga='git add'
-alias gaa='git add --all'
-alias gapa='git add --patch'
-alias gau='git add --update'
-alias gav='git add --verbose'
-alias gap='git apply'
-alias gapt='git apply --3way'
-
-# Branch
-alias gb='git branch'
-alias gba='git branch -a'
-alias gbd='git branch -d'
-alias gbda='git branch --no-color --merged | command grep -vE "^(\\+|\\*|\\s*($(git_main_branch)|$(git_develop_branch))\\s*$)" | command xargs -n 1 git branch -d'
-alias gbD='git branch -D'
-alias gbl='git blame -b -w'
-alias gbnm='git branch --no-merged'
-alias gbr='git branch --remote'
-alias gbs='git bisect'
-alias gbsb='git bisect bad'
-alias gbsg='git bisect good'
-alias gbsr='git bisect reset'
-alias gbss='git bisect start'
-
-# Commit
-alias gc='git commit -v'
-alias gca='git commit -v -a'
-alias gcam='git commit -a -m'
-alias gcas='git commit -a -s'
-alias gcasm='git commit -a -s -m'
-alias gcb='git checkout -b'
-alias gcf='git config --list'
-alias gcl='git clone --recurse-submodules'
-alias gclean='git clean -id'
-alias gcm='git commit -m'
-alias gcmsg='git commit -m'
-alias gco='git checkout'
-alias gcor='git checkout --recurse-submodules'
-alias gcount='git shortlog -sn'
-alias gcp='git cherry-pick'
-alias gcpa='git cherry-pick --abort'
-alias gcpc='git cherry-pick --continue'
-alias gcs='git commit -S'
-alias gcsm='git commit -s -m'
-alias gcss='git commit -S -s'
-alias gcssm='git commit -S -s -m'
-
-# Diff
-alias gd='git diff'
-alias gdca='git diff --cached'
-alias gdcw='git diff --cached --word-diff'
-alias gdct='git describe --tags $(git rev-list --tags --max-count=1)'
-alias gds='git diff --staged'
-alias gdt='git diff-tree --no-commit-id --name-only -r'
-alias gdw='git diff --word-diff'
-
-# Fetch
-alias gfetch='git fetch'
-alias gfo='git fetch origin'
-
-# Log
-alias gl='git pull'
-alias glg='git log --stat'
-alias glgp='git log --stat -p'
-alias glgg='git log --graph'
-alias glgga='git log --graph --decorate --all'
-alias glgm='git log --graph --max-count=10'
-alias glo='git log --oneline --decorate'
-alias glol="git log --graph --pretty='%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'"
-alias glols="git log --graph --pretty='%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --stat"
-alias glod="git log --graph --pretty='%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%ad) %C(bold blue)<%an>%Creset'"
-alias glods="git log --graph --pretty='%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%ad) %C(bold blue)<%an>%Creset' --date=short"
-alias glola="git log --graph --pretty='%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --all"
-alias glog='git log --oneline --decorate --graph'
-alias gloga='git log --oneline --decorate --graph --all'
-alias glp='git log --pretty=format:"%h %ad | %s%d [%an]" --graph --date=short'
-
-# Merge
-alias gm='git merge'
-alias gmom='git merge origin/$(git_main_branch)'
-alias gmt='git mergetool --no-prompt'
-alias gmtvim='git mergetool --no-prompt --tool=vimdiff'
-alias gmum='git merge upstream/$(git_main_branch)'
-
-# Push/Pull
-alias gp='git push'
-alias gpd='git push --dry-run'
-alias gpf='git push --force-with-lease'
-alias gpf!='git push --force'
-alias gpoat='git push origin --all && git push origin --tags'
-alias gpu='git push upstream'
-alias gpv='git push -v'
-alias gpl='git pull'
-alias gpr='git pull --rebase'
-alias gprv='git pull --rebase -v'
-alias gpra='git pull --rebase --autostash'
-alias gprav='git pull --rebase --autostash -v'
-
-# Rebase
-alias grb='git rebase'
-alias grba='git rebase --abort'
-alias grbc='git rebase --continue'
-alias grbd='git rebase develop'
-alias grbi='git rebase -i'
-alias grbm='git rebase $(git_main_branch)'
-alias grbo='git rebase --onto'
-alias grbs='git rebase --skip'
-
-# Remote
-alias gr='git remote'
-alias gra='git remote add'
-alias grh='git reset'
-alias grhh='git reset --hard'
-alias groh='git reset origin/$(git_main_branch) --hard'
-alias grm='git rm'
-alias grmc='git rm --cached'
-alias grmv='git remote rename'
-alias grrm='git remote remove'
-alias grs='git restore'
-alias grset='git remote set-url'
-alias grss='git restore --source'
-alias grst='git restore --staged'
-alias grt='cd "$(git rev-parse --show-toplevel || echo .)"'
-alias gru='git reset --'
-alias grup='git remote update'
-alias grv='git remote -v'
-
-# Stash
-alias gst='git status'
-alias gss='git status -s'
-alias gstaa='git stash apply'
-alias gstc='git stash clear'
-alias gstd='git stash drop'
-alias gstl='git stash list'
-alias gstp='git stash pop'
-alias gsts='git stash show --text'
-alias gstu='git stash --include-untracked'
-alias gstall='git stash --all'
-alias gsu='git submodule update'
-alias gsw='git switch'
-alias gswc='git switch -c'
-
-# Tag
-alias gts='git tag -s'
-alias gtv='git tag | sort -V'
-alias gtl='gtl(){ git tag --sort=-v:refname -n -l "${1}*" }; noglob gtl'
-
-# Working tree
-alias gwt='git worktree'
-alias gwta='git worktree add'
-alias gwtls='git worktree list'
-alias gwtmv='git worktree move'
-alias gwtrm='git worktree remove'
-
-# What changed
-alias gwch='git whatchanged -p --abbrev-commit --pretty=medium'
+if command_exists git; then
+    # Basic Git commands
+    alias g='git'
+    alias ga='git add'
+    alias gaa='git add --all'
+    alias gc='git commit -v'
+    alias gcm='git commit -m'
+    alias gco='git checkout'
+    alias gcb='git checkout -b'
+    alias gst='git status'
+    alias gss='git status -s'
+    alias gl='git pull'
+    alias gp='git push'
+    alias gb='git branch'
+    alias gd='git diff'
+    alias glog='git log --oneline --decorate --graph'
+    alias glola='git log --graph --pretty=format:"%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset" --all'
+fi
 
 # ===============================
-# 🪟 TMUX
+# 🪟 TMUX SMART ALIASES
 # ===============================
-alias tls='tmux list-sessions'
-alias ta='tmux attach -t'
-alias tmux-style='~/tmux-changer.sh'    # Dynamic tmux status changer
-alias tstyle='~/tmux-changer.sh'       # Short alias
-alias tmc='~/tmux-changer.sh'          # Tmux changer
-alias ide='tmux split-window -h && tmux split-window -v && tmux select-pane -t 0 && tmux split-window -v'
+if command_exists tmux; then
+    alias tls='tmux list-sessions'
+    alias ta='tmux attach -t'
+    alias tnew='tmux new-session -s'
+    alias tkill='tmux kill-session -t'
+    
+    # Custom scripts (if they exist)
+    if [[ -f "$HOME/tmux-changer.sh" ]]; then
+        alias tmux-style='~/tmux-changer.sh'
+        alias tstyle='~/tmux-changer.sh'
+        alias tmc='~/tmux-changer.sh'
+    fi
+    
+    alias ide='tmux split-window -h && tmux split-window -v && tmux select-pane -t 0 && tmux split-window -v'
+fi
 
 # ===============================
 # 🛠️ SYSTEM SHORTCUTS
 # ===============================
-# System shortcuts
 alias reload='source ~/.zshrc'
-alias zshrc='nvim ~/.zshrc'
-alias hosts='sudo nvim /etc/hosts'
-alias ssh-config='nvim ~/.ssh/config'
+alias zshrc='$EDITOR ~/.zshrc'
 
-# Process management
-alias ps='ps aux'
-alias kill9='kill -9'
-alias pgrep='pgrep -l'
-alias jobs='jobs -l'
+# Network shortcuts with smart tools
+if command_exists ping; then
+    alias ping='ping -c 5'
+fi
 
-# Network shortcuts
-alias ping='ping -c 5'
-alias myip='curl -s ifconfig.me'
-alias localip='ip route get 1.1.1.1 | awk "{print \$7}"'
-alias ports='netstat -tuln'
+if command_exists curl; then
+    alias myip='curl -s ifconfig.me'
+    alias weather='curl wttr.in'
+    alias cheat='curl cheat.sh'
+fi
 
-# System information
-alias sysinfo='neofetch'
+# System information with smart fallbacks
+if command_exists neofetch; then
+    alias sysinfo='neofetch'
+elif command_exists screenfetch; then
+    alias sysinfo='screenfetch'
+else
+    alias sysinfo='uname -a; uptime; df -h'
+fi
+
 alias diskspace='df -h'
 alias meminfo='free -h'
-alias cpuinfo='lscpu'
 
-# Development shortcuts
-alias serve='python3 -m http.server 8000'
-alias json='jq .'
-alias weather='curl wttr.in'
-alias cheat='curl cheat.sh'
-
-# ===============================
-# 🐳 DOCKER SHORTCUTS
-# ===============================
-alias d='docker'
-alias dc='docker-compose'
-alias dps='docker ps'
-alias di='docker images'
-alias dex='docker exec -it'
+if command_exists lscpu; then
+    alias cpuinfo='lscpu'
+elif [[ -f /proc/cpuinfo ]]; then
+    alias cpuinfo='cat /proc/cpuinfo'
+fi
 
 # ===============================
-# 📁 NAVIGATION SHORTCUTS
+# 🐳 DOCKER (IF AVAILABLE)
 # ===============================
-alias home='cd ~'
-alias root='cd /'
-alias downloads='cd ~/Downloads'
-alias docs='cd ~/Documents'
+if command_exists docker; then
+    alias d='docker'
+    alias dps='docker ps'
+    alias di='docker images'
+    alias dex='docker exec -it'
+    alias drm='docker rm'
+    alias drmi='docker rmi'
+    alias dprune='docker system prune'
+fi
+
+if command_exists docker-compose; then
+    alias dc='docker-compose'
+elif command_exists docker; then
+    alias dc='docker compose'  # New syntax
+fi
 
 # ===============================
-# 📦 PACKAGE MANAGER (Ubuntu/Debian)
+# 📦 PACKAGE MANAGER DETECTION
 # ===============================
-alias install='sudo apt install'
-alias update='sudo apt update'
-alias upgrade='sudo apt upgrade'
-alias search='apt search'
+if command_exists apt; then
+    alias install='sudo apt install'
+    alias update='sudo apt update'
+    alias upgrade='sudo apt upgrade'
+    alias search='apt search'
+elif command_exists dnf; then
+    alias install='sudo dnf install'
+    alias update='sudo dnf update'
+    alias upgrade='sudo dnf upgrade'
+    alias search='dnf search'
+elif command_exists pacman; then
+    alias install='sudo pacman -S'
+    alias update='sudo pacman -Sy'
+    alias upgrade='sudo pacman -Syu'
+    alias search='pacman -Ss'
+elif command_exists brew; then
+    alias install='brew install'
+    alias update='brew update'
+    alias upgrade='brew upgrade'
+    alias search='brew search'
+fi
 
 # ===============================
-# 📋 FILE OPERATIONS
+# 📋 PRODUCTIVITY
 # ===============================
-alias backup='cp -r'
-alias size='du -sh'
-alias disk='dust 2>/dev/null'
-alias count='find . -type f | wc -l'
-
-# ===============================
-# 📋 CLIPBOARD OPERATIONS
-# ===============================
-alias copy='xclip -selection clipboard'
-alias paste='xclip -selection clipboard -o'
-
-# ===============================
-# ⏰ PRODUCTIVITY
-# ===============================
-alias bench='benchmark'  # Mini Sweet Home benchmark
 alias week='date +%V'
 alias path='echo $PATH | tr ":" "\n"'
 alias env='env | sort'
+
+# Development shortcuts
+if command_exists python3; then
+    alias serve='python3 -m http.server 8000'
+elif command_exists python; then
+    alias serve='python -m http.server 8000'
+fi
+
+if command_exists jq; then
+    alias json='jq .'
+fi
+
+# ===============================
+# 📋 CLIPBOARD (IF AVAILABLE)
+# ===============================
+if command_exists xclip; then
+    alias copy='xclip -selection clipboard'
+    alias paste='xclip -selection clipboard -o'
+elif command_exists pbcopy; then  # macOS
+    alias copy='pbcopy'
+    alias paste='pbpaste'
+fi
+
+# ===============================
+# 🔧 DEVELOPMENT TOOLS
+# ===============================
+
+# Node.js tools (if available)
+if command_exists npm; then
+    alias ni='npm install'
+    alias nr='npm run'
+    alias ns='npm start'
+    alias nt='npm test'
+fi
+
+if command_exists yarn; then
+    alias y='yarn'
+    alias ya='yarn add'
+    alias yr='yarn run'
+fi
+
+# Rust tools (if available)
+if command_exists cargo; then
+    alias cr='cargo run'
+    alias cb='cargo build'
+    alias ct='cargo test'
+    alias cc='cargo check'
+fi
+
+# Go tools (if available)
+if command_exists go; then
+    alias gr='go run'
+    alias gb='go build'
+    alias gt='go test'
+    alias gm='go mod'
+fi
+
+# ===============================
+# 🎨 FUN EXTRAS
+# ===============================
+if command_exists fortune; then
+    alias quote='fortune'
+fi
+
+if command_exists cowsay; then
+    alias cow='cowsay'
+fi
+
+# ===============================
+# 📊 SMART ALIASES INFO
+# ===============================
+alias aliases-help='echo "🏠 Mini Sweet Home Smart Aliases:
+📁 Navigation: ls, ll, la, lt, tree (exa/ls)
+🔍 Search: ff, grep (fd/rg fallbacks)  
+📝 Edit: v, vi, vim (nvim fallback)
+📊 System: top, disk, cat (modern tools)
+🐙 Git: g, ga, gc, gst, gp, gl
+🪟 Tmux: ta, tls, tnew, ide
+📦 Package: install, update, search
+🚀 Tools auto-fallback to available alternatives!"'

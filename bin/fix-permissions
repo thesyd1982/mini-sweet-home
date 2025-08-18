@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# ===============================
+# 🔧 MINI SWEET HOME - FIX PERMISSIONS
+# ===============================
+
+echo "🔧 Fixing file permissions..."
+
+# Aller dans le bon répertoire
+cd ~/mini-sweet-home
+
+# Rendre exécutables tous les scripts
+echo "📁 Making scripts executable..."
+chmod +x install
+chmod +x bin/*
+chmod +x tests/* 2>/dev/null || true
+
+# Vérifier les résultats
+echo "✅ Results:"
+echo "install: $(test -x install && echo "✅ executable" || echo "❌ not executable")"
+echo "bin/dependency-manager: $(test -x bin/dependency-manager && echo "✅ executable" || echo "❌ not executable")"
+echo "bin/benchmark: $(test -x bin/benchmark && echo "✅ executable" || echo "❌ not executable")"
+echo "bin/verify: $(test -x bin/verify && echo "✅ executable" || echo "❌ not executable")"
+echo "bin/test-runner: $(test -x bin/test-runner && echo "✅ executable" || echo "❌ not executable")"
+echo "bin/quick-check: $(test -x bin/quick-check && echo "✅ executable" || echo "❌ not executable")"
+
+echo ""
+echo "🎉 All permissions fixed! Try: make quick-check"
