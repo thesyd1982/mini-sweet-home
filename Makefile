@@ -1,255 +1,219 @@
-# ===============================
-# 🏠 MINI SWEET HOME - MAKEFILE
-# ===============================
+# Aliases pour benchmarks
+bench: benchmark
+ben: benchmark
 
-.PHONY: help install test check deps clean update backup
+tools:
+	@echo "🔧 Gestionnaire d'outils..."
+	@./scripts/tools-manager
+
+tools-status:
+	@./scripts/tools-manager status
+
+# Toggles rapides
+tools-eza:
+	@./scripts/tools-manager eza
+
+tools-fd:
+	@./scripts/tools-manager fd
+
+tools-rg:
+	@./scripts/tools-manager rg# ==========================================
+# 🏠 MINI SWEET HOME - MAKEFILE ENHANCED
+# ==========================================
+
+.PHONY: help install minimal modern developer server update doctor backup test clean enhanced nvim benchmark
 .DEFAULT_GOAL := help
 
-# Colors for output
+# Couleurs
 CYAN = \033[36m
 GREEN = \033[32m
 YELLOW = \033[33m
-RED = \033[31m
 RESET = \033[0m
 
-# Variables
-DOTFILES_DIR := $(HOME)/mini-sweet-home
-TIMESTAMP := $(shell date +%Y%m%d_%H%M%S)
-
-help: ## 🏠 Show this help message
-	@echo "$(CYAN)🏠 Mini Sweet Home - Cozy Development Environment$(RESET)"
-	@echo "=================================================="
+help: ## 🏠 Afficher cette aide
+	@echo "$(CYAN)🏠 Mini Sweet Home - Installation modulaire$(RESET)"
+	@echo "==============================================="
 	@echo ""
-	@echo "$(GREEN)Usage: make [target]$(RESET)"
+	@echo "$(GREEN)Installation rapide (RECOMMANDÉ) :$(RESET)"
+	@echo "  make enhanced   # Version améliorée avec auto-install Neovim"
 	@echo ""
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "$(CYAN)%-15s$(RESET) %s\n", $$1, $$2}'
+	@echo "$(GREEN)Installation classique :$(RESET)"
+	@echo "  make install    # Menu interactif"
+	@echo "  make minimal    # Configuration de base"
+	@echo "  make modern     # Base + outils modernes"
+	@echo "  make developer  # Environnement développeur complet"
+	@echo "  make server     # Configuration serveur optimisée"
 	@echo ""
-	@echo "$(YELLOW)💡 Quick start: make install && make check$(RESET)"
+	@echo "$(GREEN)Maintenance :$(RESET)"
+	@echo "  make update     # Mettre à jour l'installation"
+	@echo "  make doctor     # Diagnostic système"
+	@echo "  make nvim       # Setup/update Neovim avec plugins"
+	@echo "  make backup     # Sauvegarder les configs"
+	@echo "  make benchmark  # Test de performance"
+	@echo "  make test       # Tester l'installation"
+	@echo "  make clean      # Nettoyer les fichiers temporaires"
+	@echo ""
+	@echo "$(YELLOW)💡 Nouveautés v2.1 :$(RESET)"
+	@echo "  • Installation automatique des plugins Neovim"
+	@echo "  • Commande msh améliorée"
+	@echo "  • Support des lockfiles pour versions cohérentes"
+	@echo "  • Installation des outils modernes optimisée"
 
-install: ## 🚀 Install Mini Sweet Home with all dependencies
-	@echo "$(GREEN)🚀 Installing Mini Sweet Home...$(RESET)"
-	@chmod +x install bin/dependency-manager bin/benchmark
-	@./install
-	@echo "$(GREEN)✅ Installation complete! Run 'exec zsh' to start.$(RESET)"
+enhanced: ## 🚀 Installation enhanced (RECOMMANDÉ)
+	@echo "$(GREEN)🚀 Lancement de l'installation enhanced...$(RESET)"
+	@chmod +x setup-enhanced
+	@./setup-enhanced
 
-quick: ## ⚡ Quick install (configs only, no dependency check)
-	@echo "$(YELLOW)⚡ Quick installation (configs only)...$(RESET)"
-	@chmod +x bin/*
-	@ln -sf "$(DOTFILES_DIR)/configs/shell/zsh/zshrc" ~/.zshrc
-	@ln -sf "$(DOTFILES_DIR)/configs/tmux/tmux.conf" ~/.tmux.conf
-	@ln -sf "$(DOTFILES_DIR)/configs/git/gitconfig" ~/.gitconfig
-	@rm -rf ~/.config/nvim && ln -sf "$(DOTFILES_DIR)/configs/nvim" ~/.config/nvim
-	@echo "$(GREEN)✅ Quick installation complete!$(RESET)"
+install: ## 🚀 Installation interactive classique
+	@echo "$(GREEN)🚀 Lancement de l'installation interactive...$(RESET)"
+	@chmod +x setup
+	@./setup
 
-check: ## 🔍 Check dependency status
-	@echo "$(CYAN)🔍 Checking dependencies...$(RESET)"
-	@./bin/dependency-manager check
+minimal: ## 🏃‍♂️ Installation minimale (configs de base)
+	@echo "$(GREEN)🏃‍♂️ Installation profil minimal...$(RESET)"
+	@chmod +x setup-enhanced
+	@./setup-enhanced minimal
 
-deps: ## 📦 Install missing dependencies
-	@echo "$(GREEN)📦 Installing missing dependencies...$(RESET)"
-	@./bin/dependency-manager install-missing
+modern: ## ⚡ Installation moderne (minimal + outils CLI)
+	@echo "$(GREEN)⚡ Installation profil modern...$(RESET)"
+	@chmod +x setup-enhanced
+	@./setup-enhanced modern
 
-deps-all: ## 📦 Install all dependencies (full setup)
-	@echo "$(GREEN)📦 Installing all dependencies...$(RESET)"
-	@./bin/dependency-manager install-all
+developer: ## 👩‍💻 Installation développeur (complet)
+	@echo "$(GREEN)👩‍💻 Installation profil developer...$(RESET)"
+	@chmod +x setup-enhanced
+	@./setup-enhanced developer
 
-rust: ## 🦀 Install Rust toolchain
-	@echo "$(GREEN)🦀 Installing Rust...$(RESET)"
-	@./bin/dependency-manager install-rust
+server: ## 🖥️ Installation serveur (optimisée)
+	@echo "$(GREEN)🖥️ Installation profil server...$(RESET)"
+	@chmod +x setup-enhanced
+	@./setup-enhanced server
 
-go: ## 🐹 Install Go toolchain
-	@echo "$(GREEN)🐹 Installing Go...$(RESET)"
-	@./bin/dependency-manager install-go
+nvim: ## 🚀 Setup/update Neovim avec plugins
+	@echo "$(CYAN)🚀 Configuration Neovim avec plugins...$(RESET)"
+	@if [ -f "$$HOME/.local/bin/msh" ]; then \
+		$$HOME/.local/bin/msh nvim; \
+	elif [ -f "scripts/setup-neovim.sh" ]; then \
+		chmod +x scripts/setup-neovim.sh; \
+		./scripts/setup-neovim.sh --headless; \
+	else \
+		echo "$(YELLOW)⚠️  Script Neovim non trouvé$(RESET)"; \
+	fi
 
-nodejs: ## 🐹 Install Node.js
-	@echo "$(GREEN)🐹 Installing Node.js...$(RESET)"
-	@./bin/dependency-manager install-nodejs
+update: ## 🔄 Mettre à jour Mini Sweet Home
+	@echo "$(CYAN)🔄 Mise à jour...$(RESET)"
+	@if [ -f "$$HOME/.local/bin/msh" ]; then \
+		$$HOME/.local/bin/msh update; \
+	else \
+		echo "$(YELLOW)⚠️  Mini Sweet Home non installé$(RESET)"; \
+		echo "Exécutez 'make enhanced' d'abord"; \
+	fi
 
-python: ## 🐍 Install Python
-	@echo "$(GREEN)🐍 Installing Python...$(RESET)"
-	@./bin/dependency-manager install-python
+doctor: ## 🩺 Diagnostic système
+	@echo "$(CYAN)🩺 Diagnostic système...$(RESET)"
+	@if [ -f "$$HOME/.local/bin/msh" ]; then \
+		$$HOME/.local/bin/msh doctor; \
+	else \
+		echo "$(YELLOW)⚠️  Mini Sweet Home non installé$(RESET)"; \
+		echo "Exécutez 'make enhanced' d'abord"; \
+	fi
 
-docker: ## 🐳 Install Docker
-	@echo "$(GREEN)🐳 Installing Docker...$(RESET)"
-	@./bin/dependency-manager install-docker
+backup: ## 💾 Sauvegarder les configurations
+	@echo "$(CYAN)💾 Sauvegarde...$(RESET)"
+	@if [ -f "$$HOME/.local/bin/msh" ]; then \
+		$$HOME/.local/bin/msh backup; \
+	else \
+		echo "$(YELLOW)⚠️  Sauvegarde manuelle...$(RESET)"; \
+		mkdir -p ~/.mini-sweet-home-backup-$(shell date +%Y%m%d-%H%M%S); \
+		cp ~/.zshrc ~/.mini-sweet-home-backup-$(shell date +%Y%m%d-%H%M%S)/ 2>/dev/null || true; \
+		cp ~/.tmux.conf ~/.mini-sweet-home-backup-$(shell date +%Y%m%d-%H%M%S)/ 2>/dev/null || true; \
+		cp ~/.gitconfig ~/.mini-sweet-home-backup-$(shell date +%Y%m%d-%H%M%S)/ 2>/dev/null || true; \
+		echo "$(GREEN)✅ Sauvegarde terminée$(RESET)"; \
+	fi
 
-neovim: ## 📝 Install/Update Neovim
-	@echo "$(GREEN)📝 Installing Neovim...$(RESET)"
-	@./bin/dependency-manager install-neovim
+test: ## 🧪 Tester l'installation
+	@echo "$(CYAN)🧪 Test de l'installation...$(RESET)"
+	@echo "Vérification des composants :"
+	@command -v zsh >/dev/null && echo "  ✅ ZSH" || echo "  ❌ ZSH"
+	@command -v tmux >/dev/null && echo "  ✅ Tmux" || echo "  ❌ Tmux"
+	@command -v nvim >/dev/null && echo "  ✅ Neovim" || echo "  ❌ Neovim"
+	@command -v git >/dev/null && echo "  ✅ Git" || echo "  ❌ Git"
+	@if [ -f ~/.zshrc ]; then echo "  ✅ Config ZSH"; else echo "  ❌ Config ZSH"; fi
+	@if [ -f ~/.tmux.conf ]; then echo "  ✅ Config Tmux"; else echo "  ❌ Config Tmux"; fi
+	@if [ -f ~/.gitconfig ]; then echo "  ✅ Config Git"; else echo "  ❌ Config Git"; fi
+	@if [ -d ~/.config/nvim ]; then echo "  ✅ Config Neovim"; else echo "  ❌ Config Neovim"; fi
+	@echo ""
+	@echo "Outils modernes :"
+	@command -v dust >/dev/null && echo "  ✅ dust" || echo "  ⚠️  dust (optionnel)"
+	@command -v rg >/dev/null && echo "  ✅ ripgrep" || echo "  ⚠️  ripgrep (optionnel)"
+	@command -v fd >/dev/null && echo "  ✅ fd" || echo "  ⚠️  fd (optionnel)"
+	@command -v bat >/dev/null && echo "  ✅ bat" || echo "  ⚠️  bat (optionnel)"
+	@command -v exa >/dev/null && echo "  ✅ exa" || echo "  ⚠️  exa (optionnel)"
+	@command -v starship >/dev/null && echo "  ✅ starship" || echo "  ⚠️  starship (optionnel)"
+	@command -v zoxide >/dev/null && echo "  ✅ zoxide" || echo "  ⚠️  zoxide (optionnel)"
+	@echo ""
+	@echo "Plugins Neovim :"
+	@if [ -d ~/.local/share/nvim/lazy ]; then \
+		PLUGIN_COUNT=$$(find ~/.local/share/nvim/lazy -maxdepth 1 -type d 2>/dev/null | wc -l); \
+		echo "  ✅ $$((PLUGIN_COUNT - 1)) plugins installés"; \
+	else \
+		echo "  ⚠️  Aucun plugin trouvé"; \
+	fi
 
-modern: ## ⚡ Install modern CLI tools
-	@echo "$(GREEN)⚡ Installing modern CLI tools...$(RESET)"
-	@./bin/dependency-manager install-modern
-
-test: ## 🧪 Run tests
-	@echo "$(CYAN)🧪 Running tests...$(RESET)"
-	@chmod +x tests/test-*
-	@./tests/test-installation
-	@./tests/test-configs
-	@echo "$(GREEN)✅ All tests passed!$(RESET)"
-
-test-quick: ## ⚡ Run quick test suite
-	@echo "$(CYAN)⚡ Running quick tests...$(RESET)"
-	@chmod +x bin/test-runner
-	@./bin/test-runner quick
-
-test-standard: ## 🧪 Run standard test suite
-	@echo "$(CYAN)🧪 Running standard tests...$(RESET)"
-	@chmod +x bin/test-runner
-	@./bin/test-runner standard
-
-test-minimal: ## ⚡ Run minimal test suite
-	@echo "$(CYAN)⚡ Running minimal tests...$(RESET)"
-	@chmod +x bin/test-runner
-	@./bin/test-runner minimal
-
-verify: ## 🔍 Complete system verification
-	@echo "$(CYAN)🔍 Running complete verification...$(RESET)"
-	@chmod +x bin/verify
-	@./bin/verify
-
-tmux-toggle: ## 🎨 Toggle between fast/full tmux configs
-	@echo "$(CYAN)🎨 Toggling tmux configuration...$(RESET)"
-	@chmod +x bin/tmux-speed-toggle
-	@./bin/tmux-speed-toggle
-
-benchmark: ## 📊 Run performance benchmark
-	@echo "$(CYAN)📊 Running performance benchmark...$(RESET)"
-	@./bin/benchmark
-
-backup: ## 💾 Backup current configs
-	@echo "$(YELLOW)💾 Creating backup...$(RESET)"
-	@mkdir -p ~/.dotfiles_backup_$(TIMESTAMP)
-	@cp ~/.zshrc ~/.dotfiles_backup_$(TIMESTAMP)/ 2>/dev/null || true
-	@cp ~/.tmux.conf ~/.dotfiles_backup_$(TIMESTAMP)/ 2>/dev/null || true
-	@cp ~/.gitconfig ~/.dotfiles_backup_$(TIMESTAMP)/ 2>/dev/null || true
-	@cp -r ~/.config/nvim ~/.dotfiles_backup_$(TIMESTAMP)/ 2>/dev/null || true
-	@echo "$(GREEN)✅ Backup created: ~/.dotfiles_backup_$(TIMESTAMP)$(RESET)"
-
-update: ## 🔄 Update Mini Sweet Home to latest version
-	@echo "$(CYAN)🔄 Updating Mini Sweet Home...$(RESET)"
-	@git pull origin main
-	@make backup
-	@make install
-	@echo "$(GREEN)✅ Update complete!$(RESET)"
-
-clean: ## 🧹 Clean up temporary files
-	@echo "$(YELLOW)🧹 Cleaning up...$(RESET)"
+clean: ## 🧹 Nettoyer les fichiers temporaires
+	@echo "$(YELLOW)🧹 Nettoyage...$(RESET)"
 	@find . -name "*.tmp" -delete 2>/dev/null || true
 	@find . -name "*.log" -delete 2>/dev/null || true
 	@find . -name ".DS_Store" -delete 2>/dev/null || true
-	@echo "$(GREEN)✅ Cleanup complete!$(RESET)"
+	@rm -f tmux-*.log 2>/dev/null || true
+	@rm -f /tmp/nvim_install*.lua 2>/dev/null || true
+	@echo "$(GREEN)✅ Nettoyage terminé$(RESET)"
 
-uninstall: ## ❌ Uninstall Mini Sweet Home (restore backups)
-	@echo "$(RED)❌ Uninstalling Mini Sweet Home...$(RESET)"
-	@echo "$(YELLOW)⚠️  This will restore your previous configs$(RESET)"
-	@read -p "Are you sure? [y/N] " -n 1 -r; \
-	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
-		latest_backup=$$(ls -1d ~/.dotfiles_backup_* 2>/dev/null | tail -1); \
-		if [ -n "$$latest_backup" ]; then \
-			echo "$(CYAN)Restoring from: $$latest_backup$(RESET)"; \
-			cp $$latest_backup/.zshrc ~/ 2>/dev/null || true; \
-			cp $$latest_backup/.tmux.conf ~/ 2>/dev/null || true; \
-			cp $$latest_backup/.gitconfig ~/ 2>/dev/null || true; \
-			rm -rf ~/.config/nvim && cp -r $$latest_backup/nvim ~/.config/ 2>/dev/null || true; \
-			echo "$(GREEN)✅ Configs restored$(RESET)"; \
-		else \
-			echo "$(YELLOW)⚠️  No backup found, removing symlinks only$(RESET)"; \
-			rm -f ~/.zshrc ~/.tmux.conf ~/.gitconfig; \
-			rm -rf ~/.config/nvim; \
-		fi; \
-		echo "$(GREEN)✅ Uninstallation complete$(RESET)"; \
+status: ## 📊 Afficher le statut du système
+	@echo "$(CYAN)📊 Statut Mini Sweet Home$(RESET)"
+	@echo "========================="
+	@echo ""
+	@if [ -f "$$HOME/.local/bin/msh" ]; then \
+		echo "$(GREEN)✅ Mini Sweet Home installé$(RESET)"; \
+		$$HOME/.local/bin/msh doctor; \
 	else \
-		echo "$(CYAN)Cancelled.$(RESET)"; \
+		echo "$(YELLOW)⚠️  Mini Sweet Home non installé$(RESET)"; \
+		echo "Exécutez 'make enhanced' pour installer"; \
 	fi
 
-status: ## 📊 Show system status
-	@echo "$(CYAN)📊 Mini Sweet Home Status$(RESET)"
-	@echo "=========================="
+benchmark: ## 🚀 Lancer le benchmark de performance
+	@echo "$(CYAN)🚀 Benchmark de performance...$(RESET)"
+	@chmod +x scripts/benchmark
+	@./scripts/benchmark
+
+demo: ## 🎯 Démonstration rapide
+	@echo "$(CYAN)🎯 Démonstration Mini Sweet Home Enhanced$(RESET)"
+	@echo "=========================================="
 	@echo ""
-	@echo "$(GREEN)📁 Installation:$(RESET)"
-	@if [ -d "$(DOTFILES_DIR)" ]; then echo "  ✅ Mini Sweet Home installed"; else echo "  ❌ Not installed"; fi
-	@if [ -L ~/.zshrc ]; then echo "  ✅ ZSH config linked"; else echo "  ❌ ZSH not linked"; fi
-	@if [ -L ~/.tmux.conf ]; then echo "  ✅ Tmux config linked"; else echo "  ❌ Tmux not linked"; fi
-	@if [ -L ~/.config/nvim ]; then echo "  ✅ Neovim config linked"; else echo "  ❌ Neovim not linked"; fi
+	@echo "1. Installation rapide RECOMMANDÉE :"
+	@echo "   make enhanced"
 	@echo ""
-	@echo "$(GREEN)🛠️  Core Tools:$(RESET)"
-	@command -v zsh >/dev/null && echo "  ✅ ZSH" || echo "  ❌ ZSH missing"
-	@command -v tmux >/dev/null && echo "  ✅ Tmux" || echo "  ❌ Tmux missing"  
-	@command -v nvim >/dev/null && echo "  ✅ Neovim" || echo "  ❌ Neovim missing"
-	@command -v git >/dev/null && echo "  ✅ Git" || echo "  ❌ Git missing"
+	@echo "2. Profils disponibles :"
+	@echo "   • minimal    - Configuration de base + Neovim avec plugins"
+	@echo "   • modern     - Base + outils CLI modernes (dust, rg, fd, bat, exa)"
+	@echo "   • developer  - Environnement développeur (+ Node.js, LSP servers)"
+	@echo "   • server     - Configuration serveur optimisée"
 	@echo ""
-	@echo "$(GREEN)⚡ Modern Tools:$(RESET)"
-	@command -v exa >/dev/null && echo "  ✅ exa" || echo "  ⚠️  exa (fallback: ls)"
-	@command -v bat >/dev/null && echo "  ✅ bat" || echo "  ⚠️  bat (fallback: cat)"
-	@command -v fd >/dev/null && echo "  ✅ fd" || echo "  ⚠️  fd (fallback: find)"
-	@command -v rg >/dev/null && echo "  ✅ ripgrep" || echo "  ⚠️  ripgrep (fallback: grep)"
+	@echo "3. Nouveautés v2.1 :"
+	@echo "   • Installation automatique des plugins Neovim"
+	@echo "   • Commande msh améliorée avec plus de fonctionnalités"
+	@echo "   • Support des lockfiles pour versions cohérentes"
+	@echo "   • Optimisations performance"
 	@echo ""
-	@echo "$(YELLOW)💡 Run 'make check' for detailed dependency status$(RESET)"
+	@echo "4. Test rapide :"
+	@echo "   make test"
 
-doctor: ## 🩺 Diagnose issues and suggest fixes
-	@echo "$(CYAN)🩺 Mini Sweet Home Doctor$(RESET)"
-	@echo "=========================="
-	@echo ""
-	@./bin/dependency-manager check
-	@echo ""
-	@echo "$(GREEN)🔧 Suggested actions:$(RESET)"
-	@if ! command -v nvim >/dev/null; then echo "  💊 Run: make neovim"; fi
-	@if ! command -v cargo >/dev/null; then echo "  💊 Run: make rust"; fi
-	@if ! command -v exa >/dev/null; then echo "  💊 Run: make modern"; fi
-	@if ! [ -d ~/.zsh-syntax-highlighting ]; then echo "  💊 Run: make deps"; fi
-	@echo "  💊 Run: make benchmark (check performance)"
-	@echo "  💊 Run: make test (verify installation)"
-
-info: ## ℹ️ Show system information
-	@echo "$(CYAN)ℹ️  System Information$(RESET)"
-	@echo "====================="
-	@echo "$(GREEN)OS:$(RESET) $$(uname -s) $$(uname -r)"
-	@echo "$(GREEN)Arch:$(RESET) $$(uname -m)"
-	@echo "$(GREEN)Shell:$(RESET) $$SHELL"
-	@echo "$(GREEN)Terminal:$(RESET) $$TERM"
-	@echo "$(GREEN)Home:$(RESET) $$HOME"
-	@echo "$(GREEN)User:$(RESET) $$USER"
-	@echo ""
-	@if command -v lsb_release >/dev/null 2>&1; then \
-		echo "$(GREEN)Distribution:$(RESET) $$(lsb_release -d | cut -f2)"; \
-	elif [ -f /etc/os-release ]; then \
-		echo "$(GREEN)Distribution:$(RESET) $$(grep PRETTY_NAME /etc/os-release | cut -d'"' -f2)"; \
-	fi
-
-# Development targets
-dev-setup: ## 🔧 Setup development environment
-	@echo "$(GREEN)🔧 Setting up development environment...$(RESET)"
-	@make deps-all
-	@make test
-	@make benchmark
-
-dev-test: ## 🧪 Run development tests
-	@echo "$(CYAN)🧪 Running development tests...$(RESET)"
-	@shellcheck install bin/* 2>/dev/null || echo "$(YELLOW)⚠️  shellcheck not available$(RESET)"
-	@make test
-
-# Quick aliases for common tasks
-i: install ## 🚀 Alias for install
-c: check ## 🔍 Alias for check  
-t: test ## 🧪 Alias for test
-b: benchmark ## 📊 Alias for benchmark
-s: status ## 📊 Alias for status
-q: quick-check ## ⚡ Alias for quick-check
-h: health ## 🩸 Alias for health
-
-# Additional utility targets
-quick-check: ## ⚡ Quick validation before commit
-	@echo "$(CYAN)⚡ Running quick validation...$(RESET)"
-	@chmod +x bin/quick-check
-	@./bin/quick-check
-
-health: ## 🩸 Check system health
-	@echo "$(CYAN)🩸 Checking system health...$(RESET)"
-	@chmod +x bin/health-check
-	@./bin/health-check
-
-health-watch: ## 🔄 Monitor system health continuously
-	@echo "$(CYAN)🔄 Starting health monitoring...$(RESET)"
-	@chmod +x bin/health-check
-	@./bin/health-check --watch
+# Aliases rapides
+i: install ## 🚀 Alias pour install
+e: enhanced ## 🚀 Alias pour enhanced (RECOMMANDÉ)
+m: modern ## ⚡ Alias pour modern
+d: developer ## 👩‍💻 Alias pour developer
+s: status ## 📊 Alias pour status
+t: test ## 🧪 Alias pour test
+n: nvim ## 🚀 Alias pour nvim
+b: benchmark ## 🚀 Alias pour benchmark

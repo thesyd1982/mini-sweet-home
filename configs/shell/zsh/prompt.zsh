@@ -14,6 +14,6 @@ git_prompt_info() {
     echo " ${status_color}${branch}%f"
 }
 
-# Prompt original avec lambda et chevron
-PROMPT='%(?.%F{green}.%F{red})λ%f %B%F{blue}›%f%b '
-RPROMPT='%F{240}%~%f$(git_prompt_info)'
+# Prompt original avec lambda et chevron blanc
+PROMPT='%(?.%F{green}.%F{red})λ%f %B%F{white}›%f%b '
+RPROMPT='%F{255}%~%f$(git_prompt_info)'

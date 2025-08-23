@@ -1,0 +1,108 @@
+#!/bin/bash
+
+# ==========================================
+# 🌟 STARSHIP CONFIG SWITCHER
+# ==========================================
+
+set -euo pipefail
+
+readonly CONFIG_DIR="$HOME/mini-sweet-home/configs/starship"
+readonly GREEN='\033[0;32m'
+readonly BLUE='\033[0;34m'
+readonly YELLOW='\033[1;33m'
+readonly CYAN='\033[0;36m'
+readonly RESET='\033[0m'
+
+log_info() { echo -e "${BLUE}[INFO]${RESET} $1"; }
+log_success() { echo -e "${GREEN}[✓]${RESET} $1"; }
+log_header() { echo -e "${CYAN}$1${RESET}"; }
+
+show_help() {
+    log_header "🌟 Starship Configuration Switcher"
+    echo
+    echo "Usage: starship-switch [config]"
+    echo
+    echo "Available configs:"
+    echo "  minimal  - Configuration minimaliste pour dev"
+    echo "  full     - Configuration complète avec toutes les infos"
+    echo "  current  - Afficher la configuration actuelle"
+    echo "  edit     - Éditer la configuration active"
+    echo
+}
+
+set_config() {
+    local config="$1"
+    local config_file=""
+    
+    case "$config" in
+        minimal)
+            config_file="$CONFIG_DIR/starship-minimal.toml"
+            ;;
+        full)
+            config_file="$CONFIG_DIR/starship.toml"
+            ;;
+        *)
+            echo "Configuration inconnue: $config"
+            show_help
+            exit 1
+            ;;
+    esac
+    
+    if [[ ! -f "$config_file" ]]; then
+        echo "Fichier de configuration non trouvé: $config_file"
+        exit 1
+    fi
+    
+    # Mettre à jour la variable d'environnement dans .zshrc
+    sed -i "s|export STARSHIP_CONFIG=.*|export STARSHIP_CONFIG=\"$config_file\"|" "$HOME/.zshrc"
+    
+    # Mettre à jour pour la session actuelle
+    export STARSHIP_CONFIG="$config_file"
+    
+    log_success "Configuration Starship basculée vers: $config"
+    log_info "Rechargez votre shell: source ~/.zshrc"
+}
+
+show_current() {
+    local current_config="${STARSHIP_CONFIG:-default}"
+    log_header "Configuration actuelle:"
+    echo "  $current_config"
+    
+    if [[ -f "$current_config" ]]; then
+        echo
+        echo "Aperçu:"
+        head -10 "$current_config" | grep -E "^#|format"
+    fi
+}
+
+edit_current() {
+    local current_config="${STARSHIP_CONFIG:-$HOME/.config/starship.toml}"
+    
+    if [[ -f "$current_config" ]]; then
+        ${EDITOR:-nvim} "$current_config"
+    else
+        echo "Fichier de configuration non trouvé: $current_config"
+        exit 1
+    fi
+}
+
+case "${1:-help}" in
+    minimal|m)
+        set_config "minimal"
+        ;;
+    full|f)
+        set_config "full"
+        ;;
+    current|c)
+        show_current
+        ;;
+    edit|e)
+        edit_current
+        ;;
+    help|h|--help|-h)
+        show_help
+        ;;
+    *)
+        show_help
+        ;;
+esac

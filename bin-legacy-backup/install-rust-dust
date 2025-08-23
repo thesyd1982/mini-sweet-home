@@ -1,0 +1,363 @@
+#!/bin/bash
+
+# ==========================================
+# 🦀 INSTALLER RUST, CARGO ET DUST
+# ==========================================
+# Usage: ./install-rust-dust
+# Description: Installation complète de Rust, Cargo et dust avec optimisations
+
+set -euo pipefail
+
+# Couleurs pour les logs
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Fonctions de logging
+log() { echo -e "${BLUE}[INFO]${NC} $1"; }
+success() { echo -e "${GREEN}[✓]${NC} $1"; }
+warning() { echo -e "${YELLOW}[⚠]${NC} $1"; }
+error() { echo -e "${RED}[✗]${NC} $1"; exit 1; }
+
+# Détection de l'OS
+detect_os() {
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        if command -v apt >/dev/null 2>&1; then
+            echo "ubuntu"
+        elif command -v dnf >/dev/null 2>&1; then
+            echo "fedora"
+        elif command -v pacman >/dev/null 2>&1; then
+            echo "arch"
+        else
+            echo "linux"
+        fi
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        echo "macos"
+    elif [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]]; then
+        echo "windows"
+    else
+        echo "unknown"
+    fi
+}
+
+# Vérifier si nous sommes dans WSL
+is_wsl() {
+    grep -qi microsoft /proc/version 2>/dev/null || false
+}
+
+# Installation des dépendances système
+install_system_deps() {
+    local os=$(detect_os)
+    
+    log "Installation des dépendances système pour $os..."
+    
+    case "$os" in
+        ubuntu)
+            sudo apt update
+            sudo apt install -y curl build-essential gcc pkg-config libssl-dev
+            ;;
+        fedora)
+            sudo dnf groupinstall -y "Development Tools"
+            sudo dnf install -y curl gcc openssl-devel pkg-config
+            ;;
+        arch)
+            sudo pacman -S --needed --noconfirm base-devel curl openssl pkg-config
+            ;;
+        macos)
+            if ! command -v brew >/dev/null 2>&1; then
+                log "Installation de Homebrew..."
+                /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+            fi
+            brew install curl openssl pkg-config
+            ;;
+        *)
+            warning "OS non reconnu, continuons avec l'installation de Rust..."
+            ;;
+    esac
+    
+    success "Dépendances système installées"
+}
+
+# Installation de Rust via rustup
+install_rust() {
+    if command -v rustc >/dev/null 2>&1; then
+        local rust_version=$(rustc --version | cut -d' ' -f2)
+        log "Rust $rust_version est déjà installé"
+        
+        # Mettre à jour Rust
+        log "Mise à jour de Rust..."
+        rustup update
+        success "Rust mis à jour"
+    else
+        log "Installation de Rust via rustup..."
+        
+        # Télécharger et installer rustup
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+        
+        # Sourcer l'environnement Rust
+        source "$HOME/.cargo/env"
+        
+        success "Rust installé avec succès"
+    fi
+    
+    # Vérifier l'installation
+    if command -v rustc >/dev/null 2>&1 && command -v cargo >/dev/null 2>&1; then
+        local rust_version=$(rustc --version)
+        local cargo_version=$(cargo --version)
+        success "✓ $rust_version"
+        success "✓ $cargo_version"
+    else
+        error "Échec de l'installation de Rust"
+    fi
+}
+
+# Configuration optimisée de Cargo
+configure_cargo() {
+    log "Configuration de Cargo..."
+    
+    # Créer le dossier de config s'il n'existe pas
+    mkdir -p "$HOME/.cargo"
+    
+    # Configuration Cargo optimisée
+    cat > "$HOME/.cargo/config.toml" << 'EOF'
+[build]
+# Utiliser tous les cœurs disponibles pour la compilation
+jobs = 0
+
+# Optimisations pour les builds
+[profile.release]
+# Optimisation maximale
+opt-level = 3
+# Link-time optimization
+lto = true
+# Réduction de la taille des binaires
+codegen-units = 1
+# Optimisations spécifiques à l'architecture
+target-cpu = "native"
+
+[profile.dev]
+# Compilation plus rapide en dev
+opt-level = 0
+debug = true
+
+# Registres alternatifs pour plus de rapidité
+[registries]
+crates-io = { index = "https://index.crates.io/" }
+
+# Configuration des sources
+[source.crates-io]
+replace-with = "vendored-sources"
+
+[source.vendored-sources]
+directory = "vendor"
+
+# Répertoire de cache optimisé
+[cargo-new]
+name = "Your Name"
+email = "your.email@example.com"
+
+# Configuration réseau
+[http]
+check-revoke = false
+timeout = 30
+
+[net]
+retry = 3
+EOF
+    
+    # Si nous sommes dans WSL, ajouter des optimisations spécifiques
+    if is_wsl; then
+        cat >> "$HOME/.cargo/config.toml" << 'EOF'
+
+# Optimisations spécifiques à WSL
+[build]
+target-dir = "/tmp/cargo-target"
+EOF
+        success "Configuration WSL appliquée"
+    fi
+    
+    success "Configuration Cargo optimisée"
+}
+
+# Installation de dust et autres outils Rust utiles
+install_rust_tools() {
+    log "Installation de dust et autres outils Rust..."
+    
+    # S'assurer que cargo est dans le PATH
+    source "$HOME/.cargo/env" 2>/dev/null || true
+    
+    if ! command -v cargo >/dev/null 2>&1; then
+        error "Cargo n'est pas trouvé dans le PATH"
+    fi
+    
+    # Liste des outils à installer
+    local tools=(
+        "du-dust"              # dust - analyseur d'espace disque
+        "ripgrep"              # rg - recherche rapide
+        "fd-find"              # fd - alternative à find
+        "bat"                  # cat avec coloration syntaxique
+        "exa"                  # ls moderne
+        "zoxide"               # cd intelligent
+        "starship"             # prompt shell moderne
+        "cargo-watch"          # surveillance des fichiers
+        "cargo-edit"           # édition de Cargo.toml
+        "cargo-update"         # mise à jour des outils cargo
+    )
+    
+    log "Installation de ${#tools[@]} outils Rust..."
+    
+    for tool in "${tools[@]}"; do
+        if ! cargo install --list | grep -q "^$tool "; then
+            log "Installation de $tool..."
+            if cargo install "$tool"; then
+                success "✓ $tool installé"
+            else
+                warning "⚠ Échec de l'installation de $tool"
+            fi
+        else
+            success "✓ $tool déjà installé"
+        fi
+    done
+    
+    # Vérification spécifique pour dust
+    if command -v dust >/dev/null 2>&1; then
+        local dust_version=$(dust --version | head -1)
+        success "✓ $dust_version installé et fonctionnel"
+        
+        # Test rapide de dust
+        log "Test de dust..."
+        dust --version >/dev/null && success "✓ dust fonctionne correctement"
+    else
+        error "dust n'est pas accessible dans le PATH"
+    fi
+}
+
+# Configuration des aliases et PATH
+setup_shell_integration() {
+    log "Configuration de l'intégration shell..."
+    
+    # Déterminer le shell par défaut
+    local shell_config=""
+    if [[ "$SHELL" == *"zsh"* ]]; then
+        shell_config="$HOME/.zshrc"
+    elif [[ "$SHELL" == *"bash"* ]]; then
+        shell_config="$HOME/.bashrc"
+    else
+        shell_config="$HOME/.profile"
+    fi
+    
+    # Ajouter Cargo au PATH si nécessaire
+    if ! grep -q 'source "$HOME/.cargo/env"' "$shell_config" 2>/dev/null; then
+        echo '' >> "$shell_config"
+        echo '# Rust/Cargo environment' >> "$shell_config"
+        echo 'source "$HOME/.cargo/env"' >> "$shell_config"
+    fi
+    
+    # Ajouter des aliases utiles
+    local aliases_block='
+# Aliases Rust tools
+alias ls="exa --icons --group-directories-first"
+alias ll="exa -la --icons --group-directories-first"
+alias tree="exa --tree --icons"
+alias cat="bat --paging=never"
+alias find="fd"
+alias grep="rg"
+alias du="dust"
+alias cd="z"  # si zoxide est configuré
+'
+    
+    if ! grep -q "# Aliases Rust tools" "$shell_config" 2>/dev/null; then
+        echo "$aliases_block" >> "$shell_config"
+        success "Aliases ajoutés à $shell_config"
+    fi
+    
+    # Configuration de zoxide si installé
+    if command -v zoxide >/dev/null 2>&1; then
+        if ! grep -q 'eval "$(zoxide init' "$shell_config" 2>/dev/null; then
+            echo 'eval "$(zoxide init bash)"' >> "$shell_config"  # ou zsh selon le shell
+            success "Zoxide configuré"
+        fi
+    fi
+    
+    # Configuration de starship si installé
+    if command -v starship >/dev/null 2>&1; then
+        if ! grep -q 'eval "$(starship init' "$shell_config" 2>/dev/null; then
+            echo 'eval "$(starship init bash)"' >> "$shell_config"  # ou zsh selon le shell
+            success "Starship configuré"
+        fi
+    fi
+    
+    success "Intégration shell configurée"
+}
+
+# Affichage des informations finales
+show_completion_info() {
+    echo ""
+    success "🎉 Installation terminée avec succès !"
+    echo ""
+    echo "📝 Résumé de l'installation :"
+    
+    if command -v rustc >/dev/null 2>&1; then
+        echo "   ✓ $(rustc --version)"
+    fi
+    
+    if command -v cargo >/dev/null 2>&1; then
+        echo "   ✓ $(cargo --version)"
+    fi
+    
+    if command -v dust >/dev/null 2>&1; then
+        echo "   ✓ $(dust --version | head -1)"
+    fi
+    
+    echo ""
+    echo "🔧 Outils installés :"
+    local tools=("dust" "rg" "fd" "bat" "exa" "zoxide" "starship")
+    for tool in "${tools[@]}"; do
+        if command -v "$tool" >/dev/null 2>&1; then
+            echo "   ✓ $tool"
+        fi
+    done
+    
+    echo ""
+    echo "🚀 Pour utiliser les nouveaux outils :"
+    echo "   1. Redémarrez votre terminal ou exécutez :"
+    echo "      source ~/.bashrc  # ou ~/.zshrc"
+    echo ""
+    echo "   2. Testez dust :"
+    echo "      dust"
+    echo "      dust -d 2 /home"
+    echo ""
+    echo "   3. Autres commandes utiles :"
+    echo "      rg 'pattern'     # recherche rapide"
+    echo "      fd filename      # trouver des fichiers"
+    echo "      bat file.txt     # afficher avec coloration"
+    echo "      exa -la          # listing amélioré"
+    echo ""
+    echo "📚 Documentation :"
+    echo "   - Rust: https://doc.rust-lang.org/"
+    echo "   - Dust: https://github.com/bootandy/dust"
+    echo "   - Cargo: https://doc.rust-lang.org/cargo/"
+}
+
+# Fonction principale
+main() {
+    log "🦀 Début de l'installation Rust, Cargo et dust"
+    
+    if is_wsl; then
+        log "Environnement WSL détecté"
+    fi
+    
+    install_system_deps
+    install_rust
+    configure_cargo
+    install_rust_tools
+    setup_shell_integration
+    show_completion_info
+    
+    success "Installation complète terminée !"
+}
+
+# Exécution du script
+main "$@"

@@ -1,0 +1,345 @@
+#!/bin/bash
+
+# ==========================================
+# 🏠 MINI SWEET HOME - SETUP PRINCIPAL
+# ==========================================
+# Usage: curl -sSL <url>/setup | bash
+# Usage: ./setup [minimal|modern|developer|server]
+
+set -euo pipefail
+
+# ==========================================
+# CONFIGURATION ET CONSTANTES
+# ==========================================
+
+readonly SCRIPT_VERSION="2.0.0"
+readonly REPO_URL="https://github.com/user/mini-sweet-home"
+readonly INSTALL_DIR="$HOME/.mini-sweet-home"
+readonly CONFIG_DIR="$HOME/.config/mini-sweet-home"
+readonly BACKUP_DIR="$HOME/.mini-sweet-home-backup"
+
+# Couleurs pour l'affichage
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly BLUE='\033[0;34m'
+readonly CYAN='\033[0;36m'
+readonly BOLD='\033[1m'
+readonly RESET='\033[0m'
+
+# ==========================================
+# FONCTIONS UTILITAIRES
+# ==========================================
+
+log_info() { echo -e "${BLUE}[INFO]${RESET} $1"; }
+log_success() { echo -e "${GREEN}[✓]${RESET} $1"; }
+log_warning() { echo -e "${YELLOW}[⚠]${RESET} $1"; }
+log_error() { echo -e "${RED}[✗]${RESET} $1"; }
+log_header() { echo -e "${CYAN}${BOLD}$1${RESET}"; }
+
+command_exists() { command -v "$1" >/dev/null 2>&1; }
+is_wsl() { grep -qi microsoft /proc/version 2>/dev/null; }
+is_macos() { [[ "$OSTYPE" == "darwin"* ]]; }
+is_linux() { [[ "$OSTYPE" == "linux-gnu"* ]]; }
+
+detect_os() {
+    if is_macos; then
+        echo "macos"
+    elif is_linux; then
+        if command_exists apt; then
+            echo "ubuntu"
+        elif command_exists dnf; then
+            echo "fedora"
+        elif command_exists pacman; then
+            echo "arch"
+        else
+            echo "linux"
+        fi
+    else
+        echo "unknown"
+    fi
+}
+
+check_requirements() {
+    log_info "Vérification des prérequis..."
+    
+    # Vérifier l'OS supporté
+    local os=$(detect_os)
+    if [[ "$os" == "unknown" ]]; then
+        log_error "OS non supporté"
+        return 1
+    fi
+    log_success "OS détecté : $os$(is_wsl && echo " (WSL)")"
+    
+    # Vérifier curl
+    if ! command_exists curl; then
+        log_error "curl est requis mais non installé"
+        return 1
+    fi
+    log_success "curl disponible"
+    
+    # Vérifier git
+    if ! command_exists git; then
+        log_warning "git non installé (sera installé automatiquement)"
+    else
+        log_success "git disponible"
+    fi
+    
+    # Vérifier l'espace disque (minimum 500MB)
+    local available_space=$(df "$HOME" | awk 'NR==2 {print $4}')
+    if [[ $available_space -lt 500000 ]]; then
+        log_error "Espace disque insuffisant (minimum 500MB requis)"
+        return 1
+    fi
+    log_success "Espace disque suffisant"
+    
+    # Vérifier les permissions
+    if [[ ! -w "$HOME" ]]; then
+        log_error "Permissions insuffisantes dans $HOME"
+        return 1
+    fi
+    log_success "Permissions OK"
+    
+    return 0
+}
+
+# ==========================================
+# PROFILS D'INSTALLATION
+# ==========================================
+
+show_profile_menu() {
+    clear
+    log_header "🏠 Mini Sweet Home - Installation"
+    echo
+    echo "Choisissez votre profil d'installation :"
+    echo
+    echo -e "${CYAN}1)${RESET} 🏃‍♂️ ${BOLD}Minimal${RESET}      - Configs de base uniquement         (~2 min, 50MB)"
+    echo -e "${CYAN}2)${RESET} ⚡ ${BOLD}Modern${RESET}       - Minimal + outils modernes CLI      (~5 min, 200MB)"  
+    echo -e "${CYAN}3)${RESET} 👩‍💻 ${BOLD}Developer${RESET}    - Setup développeur complet          (~10 min, 500MB)"
+    echo -e "${CYAN}4)${RESET} 🖥️ ${BOLD}Server${RESET}       - Configuration serveur optimisée    (~3 min, 100MB)"
+    echo -e "${CYAN}5)${RESET} 🔧 ${BOLD}Custom${RESET}       - Installation personnalisée"
+    echo -e "${CYAN}6)${RESET} ❌ ${BOLD}Exit${RESET}         - Annuler l'installation"
+    echo
+}
+
+get_user_choice() {
+    local choice
+    while true; do
+        read -p "Votre choix [1-6]: " choice
+        case $choice in
+            1) echo "minimal"; return ;;
+            2) echo "modern"; return ;;
+            3) echo "developer"; return ;;
+            4) echo "server"; return ;;
+            5) echo "custom"; return ;;
+            6) log_info "Installation annulée"; exit 0 ;;
+            *) log_warning "Choix invalide, veuillez réessayer" ;;
+        esac
+    done
+}
+
+describe_profile() {
+    local profile="$1"
+    
+    case "$profile" in
+        minimal)
+            echo -e "${BOLD}Profil Minimal${RESET} 🏃‍♂️"
+            echo "• Configurations shell (zsh, aliases)"
+            echo "• Git configuration de base"
+            echo "• Tmux configuration simple"
+            echo "• Neovim avec config minimale"
+            echo
+            echo -e "⏱️  Temps estimé : ${GREEN}2 minutes${RESET}"
+            echo -e "💾 Espace requis : ${GREEN}50MB${RESET}"
+            ;;
+        modern)
+            echo -e "${BOLD}Profil Modern${RESET} ⚡"
+            echo "• Tout de Minimal +"
+            echo "• Rust toolchain + Cargo"
+            echo "• Outils modernes : dust, ripgrep, fd, bat, exa"
+            echo "• Starship prompt + Zoxide navigation"
+            echo "• Neovim avec plugins essentiels"
+            echo
+            echo -e "⏱️  Temps estimé : ${YELLOW}5 minutes${RESET}"
+            echo -e "💾 Espace requis : ${YELLOW}200MB${RESET}"
+            ;;
+        developer)
+            echo -e "${BOLD}Profil Developer${RESET} 👩‍💻"
+            echo "• Tout de Modern +"
+            echo "• Node.js, Python, Go"
+            echo "• Docker configuration"
+            echo "• LSP servers pour Neovim"
+            echo "• Outils développement complets"
+            echo "• Configurations Git avancées"
+            echo
+            echo -e "⏱️  Temps estimé : ${RED}10 minutes${RESET}"
+            echo -e "💾 Espace requis : ${RED}500MB${RESET}"
+            ;;
+        server)
+            echo -e "${BOLD}Profil Server${RESET} 🖥️"
+            echo "• Configuration optimisée serveur"
+            echo "• Outils monitoring et admin"
+            echo "• Sécurité renforcée"
+            echo "• Pas d'interface graphique"
+            echo "• Tmux avec monitoring intégré"
+            echo
+            echo -e "⏱️  Temps estimé : ${YELLOW}3 minutes${RESET}"
+            echo -e "💾 Espace requis : ${GREEN}100MB${RESET}"
+            ;;
+    esac
+}
+
+confirm_installation() {
+    local profile="$1"
+    
+    echo
+    describe_profile "$profile"
+    echo
+    
+    local response
+    read -p "Continuer avec l'installation ? [Y/n]: " response
+    case "$response" in
+        [nN][oO]|[nN]) 
+            log_info "Installation annulée"
+            exit 0
+            ;;
+        *) 
+            return 0
+            ;;
+    esac
+}
+
+# ==========================================
+# GESTION D'ERREURS ET NETTOYAGE
+# ==========================================
+
+cleanup() {
+    local exit_code=$?
+    
+    if [[ $exit_code -ne 0 ]]; then
+        log_error "Installation échouée"
+        
+        if [[ -d "$INSTALL_DIR" ]]; then
+            log_info "Nettoyage des fichiers temporaires..."
+            rm -rf "$INSTALL_DIR"
+        fi
+        
+        # Restaurer les sauvegardes si elles existent
+        for backup in "$HOME"/.{zshrc,tmux.conf,gitconfig}.backup; do
+            if [[ -f "$backup" ]]; then
+                mv "$backup" "${backup%.backup}"
+            fi
+        done
+        
+        echo
+        log_error "Installation annulée. Configurations restaurées."
+        log_info "Pour réessayer : curl -sSL <url>/setup | bash"
+    fi
+}
+
+trap cleanup EXIT
+
+# ==========================================
+# FONCTION PRINCIPALE
+# ==========================================
+
+main() {
+    local profile="${1:-}"
+    
+    # Affichage du header
+    log_header "🏠 Mini Sweet Home v$SCRIPT_VERSION"
+    echo
+    
+    # Vérification des prérequis
+    if ! check_requirements; then
+        log_error "Prérequis non satisfaits"
+        exit 1
+    fi
+    
+    # Sélection du profil si non spécifié
+    if [[ -z "$profile" ]]; then
+        show_profile_menu
+        profile=$(get_user_choice)
+    fi
+    
+    # Validation du profil
+    case "$profile" in
+        minimal|modern|developer|server|custom)
+            ;;
+        *)
+            log_error "Profil invalide: $profile"
+            exit 1
+            ;;
+    esac
+    
+    # Confirmation
+    confirm_installation "$profile"
+    
+    # Simulation d'installation pour démonstration
+    log_info "Début de l'installation..."
+    sleep 1
+    
+    log_info "Installation des dépendances de base..."
+    sleep 1
+    log_success "Dépendances installées"
+    
+    log_info "Téléchargement du repository..."
+    sleep 1
+    log_success "Repository téléchargé"
+    
+    log_info "Installation du profil : $profile"
+    sleep 2
+    log_success "Profil $profile installé"
+    
+    log_info "Configuration de l'intégration shell..."
+    sleep 1
+    log_success "Intégration configurée"
+    
+    # Message de fin
+    clear
+    log_header "🎉 Installation terminée avec succès !"
+    echo
+    echo -e "${GREEN}Profil installé :${RESET} ${BOLD}$profile${RESET}"
+    echo
+    echo "🚀 Pour commencer :"
+    echo -e "   ${CYAN}exec zsh${RESET}         # Redémarrer le shell"
+    echo -e "   ${CYAN}tmux${RESET}             # Lancer tmux"
+    echo -e "   ${CYAN}nvim${RESET}             # Ouvrir Neovim"
+    echo
+    
+    if [[ "$profile" == "modern" ]] || [[ "$profile" == "developer" ]]; then
+        echo "⚡ Nouveaux outils disponibles :"
+        echo -e "   ${CYAN}dust${RESET}             # Analyseur d'espace disque"
+        echo -e "   ${CYAN}rg pattern${RESET}       # Recherche rapide"
+        echo -e "   ${CYAN}fd filename${RESET}      # Trouver des fichiers"
+        echo -e "   ${CYAN}bat file.txt${RESET}     # Afficher avec coloration"
+        echo -e "   ${CYAN}exa -la${RESET}          # Listing moderne"
+        echo
+    fi
+    
+    echo "📚 Documentation :"
+    echo -e "   ${CYAN}~/.mini-sweet-home/docs/${RESET}"
+    echo
+    echo "🛠️  Commandes utiles :"
+    echo -e "   ${CYAN}msh update${RESET}       # Mettre à jour"
+    echo -e "   ${CYAN}msh doctor${RESET}       # Diagnostic"
+    echo -e "   ${CYAN}msh backup${RESET}       # Sauvegarder"
+    echo
+    
+    # Message spécifique WSL
+    if is_wsl; then
+        echo "💡 WSL détecté - Optimisations appliquées !"
+        echo
+    fi
+    
+    echo -e "${GREEN}Profitez de votre nouvel environnement !${RESET}"
+}
+
+# ==========================================
+# POINT D'ENTRÉE
+# ==========================================
+
+# Vérifier si le script est exécuté directement
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
+fi

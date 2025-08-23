@@ -1,0 +1,116 @@
+#!/bin/bash
+
+# ==========================================
+# 🎯 DÉMONSTRATION DE DUST
+# ==========================================
+# Usage: ./dust-demo
+# Description: Démonstration interactive des capacités de dust
+
+set -euo pipefail
+
+# Couleurs
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+log() { echo -e "${BLUE}[INFO]${NC} $1"; }
+demo() { echo -e "${CYAN}[DEMO]${NC} $1"; }
+cmd() { echo -e "${YELLOW}$ $1${NC}"; }
+success() { echo -e "${GREEN}[✓]${NC} $1"; }
+
+# Vérifier que dust est installé
+if ! command -v dust >/dev/null 2>&1; then
+    echo "❌ dust n'est pas installé"
+    echo "💡 Installez-le avec: make dust ou make rust-full"
+    exit 1
+fi
+
+clear
+echo "🎯 Démonstration de dust - Analyseur d'espace disque moderne"
+echo "============================================================"
+echo ""
+
+demo "Version de dust installée :"
+dust --version
+echo ""
+
+demo "1. Analyse basique du répertoire actuel"
+cmd "dust"
+dust
+echo ""
+
+read -p "Appuyez sur Entrée pour continuer..."
+clear
+
+demo "2. Analyse avec limitation de profondeur"
+cmd "dust -d 2"
+dust -d 2
+echo ""
+
+read -p "Appuyez sur Entrée pour continuer..."
+clear
+
+demo "3. Top 5 des plus gros éléments"
+cmd "dust -n 5"
+dust -n 5
+echo ""
+
+read -p "Appuyez sur Entrée pour continuer..."
+clear
+
+demo "4. Ordre inversé (plus gros en premier)"
+cmd "dust -r -n 5"
+dust -r -n 5
+echo ""
+
+read -p "Appuyez sur Entrée pour continuer..."
+clear
+
+demo "5. Analyse du répertoire home (limité)"
+cmd "dust -d 3 -n 10 ~"
+dust -d 3 -n 10 ~
+echo ""
+
+read -p "Appuyez sur Entrée pour continuer..."
+clear
+
+demo "6. Format de sortie en arbre"
+cmd "dust -t -d 2"
+dust -t -d 2
+echo ""
+
+read -p "Appuyez sur Entrée pour continuer..."
+clear
+
+demo "7. Comparaison avec 'du' traditionnel"
+echo "Temps d'exécution avec dust :"
+cmd "time dust -d 2 >/dev/null"
+time dust -d 2 >/dev/null
+
+echo ""
+echo "Temps d'exécution avec du traditionnel :"
+cmd "time du -h --max-depth=2 . 2>/dev/null | sort -hr | head -10"
+time du -h --max-depth=2 . 2>/dev/null | sort -hr | head -10
+
+echo ""
+read -p "Appuyez sur Entrée pour continuer..."
+clear
+
+demo "8. Options avancées disponibles"
+echo "Voici toutes les options de dust :"
+dust --help
+
+echo ""
+echo "🎉 Fin de la démonstration !"
+echo ""
+echo "💡 Commandes utiles à retenir :"
+echo "   dust                    # Analyse basique"
+echo "   dust -d 3              # Profondeur limitée"
+echo "   dust -n 10             # Top 10"
+echo "   dust -r                # Ordre inversé"
+echo "   dust -x                # Même système de fichiers"
+echo "   dust /path/specific    # Analyser un chemin spécifique"
+echo ""
+echo "📚 Pour plus d'infos : ~/mini-sweet-home/docs/rust-installation-guide.md"

@@ -1,0 +1,137 @@
+#!/bin/bash
+
+# ==========================================
+# ⚡ INSTALLATION RAPIDE RUST + DUST
+# ==========================================
+# Usage: curl -sSL <url> | bash
+# ou: ./quick-rust-setup
+
+set -euo pipefail
+
+# Couleurs
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+log() { echo -e "${BLUE}[INFO]${NC} $1"; }
+success() { echo -e "${GREEN}[✓]${NC} $1"; }
+warning() { echo -e "${YELLOW}[⚠]${NC} $1"; }
+
+clear
+echo "⚡ Installation rapide Rust + dust"
+echo "================================="
+echo ""
+
+# Détection de l'environnement
+if grep -qi microsoft /proc/version 2>/dev/null; then
+    log "Environnement WSL détecté"
+    IS_WSL=true
+else
+    IS_WSL=false
+fi
+
+# Installation des dépendances système
+log "Vérification des dépendances système..."
+if command -v apt >/dev/null 2>&1; then
+    sudo apt update >/dev/null 2>&1
+    sudo apt install -y curl build-essential >/dev/null 2>&1
+    success "Dépendances Ubuntu installées"
+elif command -v dnf >/dev/null 2>&1; then
+    sudo dnf groupinstall -y "Development Tools" >/dev/null 2>&1
+    success "Dépendances Fedora installées"
+fi
+
+# Installation de Rust
+if ! command -v rustc >/dev/null 2>&1; then
+    log "Installation de Rust..."
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y >/dev/null 2>&1
+    source "$HOME/.cargo/env"
+    success "Rust installé"
+else
+    success "Rust déjà installé"
+    source "$HOME/.cargo/env" 2>/dev/null || true
+fi
+
+# Configuration optimisée
+log "Configuration de Cargo..."
+mkdir -p "$HOME/.cargo"
+cat > "$HOME/.cargo/config.toml" << 'EOF'
+[build]
+jobs = 0
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+
+[profile.dev]
+opt-level = 0
+debug = true
+EOF
+
+if $IS_WSL; then
+    echo '' >> "$HOME/.cargo/config.toml"
+    echo '[build]' >> "$HOME/.cargo/config.toml"
+    echo 'target-dir = "/tmp/cargo-target"' >> "$HOME/.cargo/config.toml"
+    success "Configuration WSL appliquée"
+fi
+
+# Installation de dust
+log "Installation de dust..."
+if cargo install du-dust >/dev/null 2>&1; then
+    success "dust installé"
+else
+    warning "Échec de l'installation de dust"
+fi
+
+# Outils bonus (optionnels)
+log "Installation d'outils bonus..."
+tools=("ripgrep" "fd-find" "bat")
+for tool in "${tools[@]}"; do
+    if cargo install "$tool" >/dev/null 2>&1; then
+        success "$tool installé"
+    else
+        warning "Échec: $tool"
+    fi
+done
+
+# Configuration shell
+log "Configuration du shell..."
+shell_config="$HOME/.bashrc"
+[[ "$SHELL" == *"zsh"* ]] && shell_config="$HOME/.zshrc"
+
+if ! grep -q 'source "$HOME/.cargo/env"' "$shell_config" 2>/dev/null; then
+    echo '' >> "$shell_config"
+    echo '# Rust environment' >> "$shell_config"
+    echo 'source "$HOME/.cargo/env"' >> "$shell_config"
+    success "Configuration shell mise à jour"
+fi
+
+# Test final
+log "Test de l'installation..."
+if command -v dust >/dev/null 2>&1; then
+    success "✅ $(dust --version | head -1)"
+    
+    echo ""
+    echo "🎉 Installation terminée avec succès !"
+    echo ""
+    echo "🚀 Commandes disponibles :"
+    echo "   dust              # Analyser l'espace disque"
+    echo "   rg 'pattern'      # Recherche rapide"
+    echo "   fd filename       # Trouver des fichiers"
+    echo "   bat file.txt      # Afficher avec coloration"
+    echo ""
+    echo "💡 Redémarrez votre terminal ou exécutez :"
+    echo "   source ~/.cargo/env"
+    echo ""
+    echo "📊 Testez dust maintenant :"
+    echo "   dust"
+    
+else
+    warning "❌ dust n'est pas accessible"
+    echo "💡 Redémarrez votre terminal et réessayez"
+fi
+
+echo ""
+echo "🔗 Plus d'infos: https://github.com/bootandy/dust"

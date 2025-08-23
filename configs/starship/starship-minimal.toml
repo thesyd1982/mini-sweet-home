@@ -1,0 +1,168 @@
+# ==========================================
+# 🚀 MINI SWEET HOME - STARSHIP MINIMAL DEV
+# ==========================================
+# Configuration minimaliste adaptée au développement
+
+# Format principal - Une seule ligne, informations essentielles
+format = """
+$directory\
+$git_branch\
+$git_status\
+$nodejs\
+$python\
+$rust\
+$golang\
+$docker_context\
+$aws\
+$kubernetes\
+$character"""
+
+# Répertoire - Compact avec icônes pour projets
+[directory]
+style = "bold cyan"
+format = "[$path]($style) "
+truncation_length = 2
+truncation_symbol = "…/"
+read_only = " 🔒"
+
+# Substitutions pour projets courants
+[directory.substitutions]
+"mini-sweet-home" = "🏠"
+"projects" = "📁"
+"work" = "💼"
+"dev" = "⚡"
+"Documents" = "📄"
+"Downloads" = "⬇️"
+
+# Git - Minimaliste mais informatif
+[git_branch]
+symbol = " "
+style = "bold purple"
+format = "[$symbol$branch]($style)"
+truncation_length = 20
+
+[git_status]
+style = "bold red"
+format = "[$all_status$ahead_behind]($style) "
+conflicted = "⚡"
+ahead = "⇡"
+behind = "⇣"
+diverged = "⇕"
+up_to_date = ""
+untracked = "?"
+stashed = "$"
+modified = "!"
+staged = "+"
+renamed = "»"
+deleted = "✘"
+
+# Langages - Seulement si pertinents
+[nodejs]
+symbol = " "
+style = "bold green"
+format = "[$symbol$version]($style) "
+detect_extensions = ["js", "mjs", "cjs", "ts", "tsx", "vue"]
+detect_files = ["package.json", ".nvmrc"]
+detect_folders = ["node_modules"]
+
+[python]
+symbol = " "
+style = "bold yellow"
+format = "[$symbol$version]($style) "
+detect_extensions = ["py"]
+detect_files = ["requirements.txt", "pyproject.toml", "Pipfile"]
+
+[rust]
+symbol = " "
+style = "bold orange"
+format = "[$symbol$version]($style) "
+detect_extensions = ["rs"]
+detect_files = ["Cargo.toml"]
+
+[golang]
+symbol = " "
+style = "bold cyan"
+format = "[$symbol$version]($style) "
+detect_extensions = ["go"]
+detect_files = ["go.mod", "go.sum"]
+
+# Docker - Seulement si actif
+[docker_context]
+symbol = " "
+style = "bold blue"
+format = "[$symbol$context]($style) "
+only_with_files = true
+detect_files = ["docker-compose.yml", "Dockerfile"]
+
+# AWS - Région seulement
+[aws]
+symbol = "☁️ "
+style = "bold yellow"
+format = "[$symbol$region]($style) "
+disabled = false
+
+# Kubernetes - Context seulement
+[kubernetes]
+symbol = "⎈ "
+style = "bold blue"
+format = "[$symbol$context]($style) "
+disabled = false
+
+# Caractère prompt - Simple et efficace
+[character]
+success_symbol = "[❯](bold green)"
+error_symbol = "[❯](bold red)"
+vimcmd_symbol = "[❮](bold yellow)"
+
+# Désactiver les modules non essentiels pour le dev
+[battery]
+disabled = true
+
+[time]
+disabled = true
+
+[memory_usage]
+disabled = true
+
+[username]
+disabled = true
+
+[hostname]
+disabled = true
+
+[os]
+disabled = true
+
+# Jobs - Utile pour les builds longs
+[jobs]
+symbol = "⚙️ "
+style = "bold blue"
+number_threshold = 1
+format = "[$symbol$number]($style) "
+
+# Status - Codes d'erreur importants
+[status]
+disabled = false
+symbol = "✖"
+success_symbol = ""
+format = '[\[$symbol$common_meaning$signal_name$maybe_int\]]($style) '
+map_symbol = true
+recognize_signal_code = true
+
+# Variables d'environnement importantes pour le dev
+[env_var.NODE_ENV]
+symbol = "🌍 "
+style = "bold green"
+format = "[$symbol$env_value]($style) "
+
+[env_var.RAILS_ENV]
+symbol = "💎 "
+style = "bold red"
+format = "[$symbol$env_value]($style) "
+
+# Package version pour projets
+[package]
+disabled = false
+symbol = "📦 "
+style = "bold yellow"
+format = "[$symbol$version]($style) "

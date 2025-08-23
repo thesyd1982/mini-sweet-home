@@ -2,8 +2,36 @@
 # 🏠 MINI SWEET HOME - ZSH CONFIG
 # ===============================
 
-# Charger les configurations modulaires
-source ~/mini-sweet-home/configs/shell/zsh/exports.zsh
-source ~/mini-sweet-home/configs/shell/zsh/aliases.zsh
-source ~/mini-sweet-home/configs/shell/zsh/functions.zsh
-source ~/mini-sweet-home/configs/shell/zsh/prompt.zsh
+# Path setup
+export PATH="$HOME/.local/bin:$PATH"
+
+# ZSH settings (load early)
+autoload -Uz compinit && compinit
+setopt AUTO_CD HIST_IGNORE_DUPS HIST_IGNORE_SPACE SHARE_HISTORY
+HISTFILE=~/.zsh_history
+HISTSIZE=10000
+SAVEHIST=10000
+
+# Load Mini Sweet Home configs BEFORE modern tools
+MSH_CONFIG_DIR="$HOME/mini-sweet-home/configs/shell/zsh"
+if [[ -d "$MSH_CONFIG_DIR" ]]; then
+    [[ -f "$MSH_CONFIG_DIR/exports.zsh" ]] && source "$MSH_CONFIG_DIR/exports.zsh"
+    [[ -f "$MSH_CONFIG_DIR/functions.zsh" ]] && source "$MSH_CONFIG_DIR/functions.zsh"
+    # Load aliases but UNSET conflicting cd alias before zoxide
+    [[ -f "$MSH_CONFIG_DIR/aliases.zsh" ]] && source "$MSH_CONFIG_DIR/aliases.zsh"
+    
+    # Remove problematic cd alias if it exists
+    unalias cd 2>/dev/null || true
+    
+    [[ -f "$MSH_CONFIG_DIR/prompt.zsh" ]] && source "$MSH_CONFIG_DIR/prompt.zsh"
+fi
+
+# Initialize modern tools AFTER loading configs
+command -v zoxide >/dev/null && eval "$(zoxide init zsh)"
+# Starship with FUNCNEST protection
+if command -v starship >/dev/null && [[ -z "$STARSHIP_INITIALIZED" ]]; then
+    export STARSHIP_INITIALIZED=1
+    eval "$(starship init zsh)"
+fi
+
+echo "✅ Mini Sweet Home v2.1.4 loaded (symlink)"

@@ -11,8 +11,19 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
-# Smart ls replacement (exa -> ls fallback)
-if command_exists exa; then
+# Smart ls replacement (eza -> exa -> ls fallback)
+if command_exists eza; then
+    alias ls='eza --color=always --group-directories-first --icons'
+    alias ll='eza -la --color=always --group-directories-first --icons'
+    alias la='eza -a --color=always --group-directories-first --icons'
+    alias lt='eza -T --color=always --group-directories-first --icons'
+    alias tree='eza -T --color=always --group-directories-first --icons'
+    alias l='eza -l --icons'
+    alias lall='eza -la --icons'
+    alias lh='eza -lah --icons'
+    alias ltime='eza -lt modified --icons'
+    alias lr='eza -lR --icons'
+elif command_exists exa; then
     alias ls='exa --color=always --group-directories-first'
     alias ll='exa -la --color=always --group-directories-first'
     alias la='exa -a --color=always --group-directories-first'
@@ -98,16 +109,8 @@ else
     :
 fi
 
-# Smart cd with zoxide fallback
-if command_exists zoxide; then
-    eval "$(zoxide init zsh)"
-    alias cd='z'
-    alias cdi='zi'  # Interactive mode
-    alias cdd='cd'  # Original cd
-else
-    alias cdi='cd'  # No interactive mode available
-    alias cdd='cd'
-fi
+# Smart cd - Let zoxide handle this in .zshrc
+# (Removed conflicting aliases to prevent recursion)
 
 # ===============================
 # 📝 EDITOR DETECTION & FALLBACKS
@@ -145,6 +148,8 @@ alias vtm='$EDITOR ~/mini-sweet-home/configs/tmux/tmux.conf'
 alias vgit='$EDITOR ~/mini-sweet-home/configs/git/gitconfig'
 alias valiases='$EDITOR ~/mini-sweet-home/configs/shell/zsh/aliases.zsh'
 alias vfunctions='$EDITOR ~/mini-sweet-home/configs/shell/zsh/functions.zsh'
+alias vstarship='$EDITOR ~/mini-sweet-home/configs/starship/starship.toml'
+# ss command is now in ~/.local/bin/ss (no alias needed)
 
 # Neovim with MCP (if available)
 if command_exists nvim; then
@@ -392,7 +397,7 @@ fi
 # 📊 SMART ALIASES INFO
 # ===============================
 alias aliases-help='echo "🏠 Mini Sweet Home Smart Aliases:
-📁 Navigation: ls, ll, la, lt, tree (exa/ls)
+📁 Navigation: ls, ll, la, lt, tree (eza/exa/ls)
 🔍 Search: ff, grep (fd/rg fallbacks)  
 📝 Edit: v, vi, vim (nvim fallback)
 📊 System: top, disk, cat (modern tools)
