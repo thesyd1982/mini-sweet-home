@@ -55,9 +55,76 @@ detect_os() {
         else
             echo "linux"
         fi
+    elif [[ "$OSTYPE" == "msys"* ]] || [[ "$OSTYPE" == "cygwin"* ]]; then
+        echo "windows-bash"  # Git Bash/MSYS2/Cygwin
+    elif [[ -n "$WINDIR" ]] || [[ -n "$windir" ]]; then
+        echo "windows"  # Windows natif
     else
         echo "unknown"
     fi
+}
+
+is_windows() {
+    [[ "$OSTYPE" == "msys"* ]] || [[ "$OSTYPE" == "cygwin"* ]] || [[ -n "$WINDIR" ]] || [[ -n "$windir" ]]
+}
+
+is_windows_native() {
+    [[ -n "$WINDIR" ]] || [[ -n "$windir" ]]
+}
+
+install_prerequisites() {
+    local os=$(detect_os)
+    local missing_tools=()
+    
+    # Vérifier curl
+    if ! command_exists curl; then
+        missing_tools+=("curl")
+    fi
+    
+    # Vérifier git  
+    if ! command_exists git; then
+        missing_tools+=("git")
+    fi
+    
+    if [[ ${#missing_tools[@]} -eq 0 ]]; then
+        return 0
+    fi
+    
+    log_info "Installation des prérequis manquants : ${missing_tools[*]}"
+    
+    case "$os" in
+        ubuntu)
+            sudo apt update && sudo apt install -y "${missing_tools[@]}"
+            ;;
+        macos)
+            if command_exists brew; then
+                brew install "${missing_tools[@]}"
+            else
+                log_error "Homebrew requis sur macOS. Installez d'abord Homebrew."
+                return 1
+            fi
+            ;;
+        fedora)
+            sudo dnf install -y "${missing_tools[@]}"
+            ;;
+        arch)
+            sudo pacman -S --noconfirm "${missing_tools[@]}"
+            ;;
+        *)
+            log_error "Installation automatique non supportée pour $os"
+            log_info "Installez manuellement : ${missing_tools[*]}"
+            return 1
+            ;;
+    esac
+    
+    # Vérifier que l'installation a réussi
+    for tool in "${missing_tools[@]}"; do
+        if ! command_exists "$tool"; then
+            log_error "Échec installation de $tool"
+            return 1
+        fi
+        log_success "$tool installé avec succès"
+    done
 }
 
 check_requirements() {
@@ -71,19 +138,13 @@ check_requirements() {
     fi
     log_success "OS détecté : $os$(is_wsl && echo " (WSL)")"
     
-    # Vérifier curl
-    if ! command_exists curl; then
-        log_error "curl est requis mais non installé"
+    # Installer les prérequis si manquants
+    if ! install_prerequisites; then
         return 1
     fi
-    log_success "curl disponible"
     
-    # Vérifier git
-    if ! command_exists git; then
-        log_warning "git non installé (sera installé automatiquement)"
-    else
-        log_success "git disponible"
-    fi
+    log_success "curl disponible"
+    log_success "git disponible"
     
     # Vérifier l'espace disque (minimum 500MB)
     local available_space=$(df "$HOME" | awk 'NR==2 {print $4}')
@@ -144,6 +205,7 @@ describe_profile() {
     case "$profile" in
         minimal)
             echo -e "${BOLD}Profil Minimal${RESET} 🏃‍♂️"
+            echo "• Prérequis : curl, git (obligatoires)"
             echo "• Configurations shell (zsh, aliases)"
             echo "• Git configuration de base"
             echo "• Tmux configuration simple"

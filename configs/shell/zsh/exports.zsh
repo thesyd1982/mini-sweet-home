@@ -98,17 +98,22 @@ if [[ -f ~/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; then
     source ~/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 fi
 
-# Autosuggestions simple
-if [[ -f ~/.zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
-    source ~/.zsh-autosuggestions/zsh-autosuggestions.zsh
-    ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=240'
-fi
+# Autosuggestions temporarily disabled due to FUNCNEST recursion
+# if [[ -f ~/.zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
+#     source ~/.zsh-autosuggestions/zsh-autosuggestions.zsh
+#     ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=240'
+# fi
 
 # ===============================
 # 🗺️ ZOXIDE
 # ===============================
-
-# Zoxide
+# Zoxide (smart cd replacement) - single clean initialization
 if command -v zoxide >/dev/null 2>&1; then
-    eval "$(zoxide init zsh --cmd j)"
+    eval "$(zoxide init zsh --cmd j)" 2>/dev/null || true
 fi
+
+# ===============================
+# opencode
+# ===============================
+export PATH=/home/thesyd/.opencode/bin:$PATH
+export FUNCNEST=1000
