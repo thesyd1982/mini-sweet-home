@@ -116,13 +116,39 @@ _ps_present_selection() {
     # Simple direct approach - check for project markers
     discovered_projects=""
     for dir in "${existing_dirs[@]}"; do
-        if [[ -d "$dir" ]] && ([[ -f "$dir/package.json" ]] || [[ -f "$dir/Cargo.toml" ]] || [[ -f "$dir/go.mod" ]] || [[ -d "$dir/.git" ]]); then
-            local name=$(/usr/bin/basename "$dir")
-            local type="📁 Project"
-            [[ -f "$dir/package.json" ]] && type="📦 Node.js"
-            [[ -f "$dir/Cargo.toml" ]] && type="🦀 Rust"
-            [[ -f "$dir/go.mod" ]] && type="🐹 Go"
-            discovered_projects+="$dir|$name|$type|$dir"$'\n'
+        [[ $debug_mode == true ]] && _ps_debug "Checking directory: $dir"
+        if [[ -d "$dir" ]]; then
+            local has_markers=false
+            if [[ -f "$dir/package.json" ]]; then
+                has_markers=true
+                [[ $debug_mode == true ]] && _ps_debug "Found package.json in $dir"
+            fi
+            if [[ -f "$dir/Cargo.toml" ]]; then
+                has_markers=true
+                [[ $debug_mode == true ]] && _ps_debug "Found Cargo.toml in $dir"
+            fi
+            if [[ -f "$dir/go.mod" ]]; then
+                has_markers=true
+                [[ $debug_mode == true ]] && _ps_debug "Found go.mod in $dir"
+            fi
+            if [[ -d "$dir/.git" ]]; then
+                has_markers=true
+                [[ $debug_mode == true ]] && _ps_debug "Found .git in $dir"
+            fi
+            
+            if [[ $has_markers == true ]]; then
+                local name=$(/usr/bin/basename "$dir")
+                local type="📁 Project"
+                [[ -f "$dir/package.json" ]] && type="📦 Node.js"
+                [[ -f "$dir/Cargo.toml" ]] && type="🦀 Rust"
+                [[ -f "$dir/go.mod" ]] && type="🐹 Go"
+                discovered_projects+="$dir|$name|$type|$dir"$'\n'
+                [[ $debug_mode == true ]] && _ps_debug "Added project: $name ($type)"
+            else
+                [[ $debug_mode == true ]] && _ps_debug "No project markers in $dir"
+            fi
+        else
+            [[ $debug_mode == true ]] && _ps_debug "Directory $dir does not exist"
         fi
     done
     
@@ -132,7 +158,8 @@ _ps_present_selection() {
         return 1
     fi
     
-    [[ $debug_mode == true ]] && _ps_debug "Projects found successfully!"
+    [[ $debug_mode == true ]] && _ps_debug "Projects found successfully! Count: $(echo -n "$discovered_projects" | /usr/bin/grep -c '|' || echo 0)"
+    [[ $debug_mode == true ]] && _ps_debug "Discovered projects data: $discovered_projects"
     return 0
 }
 

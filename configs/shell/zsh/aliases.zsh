@@ -20,20 +20,19 @@ else
     alias lt='ls -la --color=auto'
 fi
 
-# tree fallback: eza -> tree -> find
+# tree fallback: eza -> tree -> find (fixed recursion)
 if command -v eza >/dev/null 2>&1; then
     alias tree='eza --tree --icons --level=3'
 elif command -v tree >/dev/null 2>&1; then
-    alias tree='tree -C -L 3'
+    alias tree='/usr/bin/tree -C -L 3'  # Use absolute path to avoid recursion
 else
-    # Create tree function when no tree command exists
-    # Note: using different approach to avoid alias conflicts
-    alias tree='_tree_fallback'
+    # Fallback function when no tree command exists
     _tree_fallback() {
         local dir="${1:-.}"
         local level="${2:-3}"
         find "$dir" -type d -not -path '*/.*' | head -20 | sed -e 's/[^-][^\/]*\//  |/g' -e 's/|\([^ ]\)/|-\1/'
     }
+    alias tree='_tree_fallback'
 fi
 
 # Directory navigation shortcuts
@@ -149,11 +148,11 @@ alias gpop='git stash pop'
 # ===============================
 
 if command -v tmux >/dev/null 2>&1; then
-    alias ta='tmux attach'
-    alias tls='tmux list-sessions'
-    alias tnew='tmux new-session'
-    alias tkill='tmux kill-session'
-    alias ide='tmux new-session -d -s dev && tmux split-window -h && tmux attach-session -t dev'
+    alias ta='/usr/bin/tmux attach'
+    alias tls='/usr/bin/tmux list-sessions'
+    alias tnew='/usr/bin/tmux new-session'
+    alias tkill='/usr/bin/tmux kill-session'
+    alias ide='/usr/bin/tmux new-session -d -s dev && /usr/bin/tmux split-window -h && /usr/bin/tmux attach-session -t dev'
 fi
 
 # ===============================

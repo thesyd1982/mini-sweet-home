@@ -3,6 +3,15 @@
 # ===============================
 
 # ===============================
+# 🛡️ UTILITY FUNCTIONS
+# ===============================
+
+# Function to check if command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# ===============================
 # 📁 NAVIGATION FUNCTION (jp pour éviter conflit avec zoxide)
 # ===============================
 # Note: zoxide utilise déjà 'j', on utilise 'jp' (jump project)
@@ -245,93 +254,13 @@ node() {
 }
 
 # ===============================
-# 🔄 PROJECT SWITCHER avec TMUX
+# 📦 MODULES IMPORT
 # ===============================
-project_switch() {
-    if ! command -v fzf &>/dev/null; then
-        echo "❌ fzf non installé"
-        return 1
-    fi
-    
-    local project_dirs=("$HOME/projects" "$HOME/business" "$HOME/work" "$HOME/dev")
-    local existing_dirs=()
-    
-    for dir in "${project_dirs[@]}"; do
-        [[ -d "$dir" ]] && existing_dirs+=("$dir")
-    done
-    
-    if [[ ${#existing_dirs[@]} -eq 0 ]]; then
-        echo "❌ Aucun dossier projet trouvé"
-        return 1
-    fi
-    
-    echo "🔍 Recherche de projets..."
-    
-    local project_dir
-    project_dir=$({ 
-        for dir in "${existing_dirs[@]}"; do
-            find "$dir" -maxdepth 3 -type d \( -name 'node_modules' -o -name 'target' \) -prune -o \
-                 -type f \( -name "package.json" -o -name "Cargo.toml" -o -name "go.mod" \
-                            -o -name "pyproject.toml" -o -name "requirements.txt" -o -name "Pipfile" \) \
-                 -exec dirname {} \; 2>/dev/null | grep -v -E '(node_modules|target)'
-            find "$dir" -maxdepth 3 -type d -name '.git' -exec dirname {} \; 2>/dev/null
-            find "$dir" -mindepth 1 -maxdepth 1 -type d ! -name 'node_modules' ! -name '.*' 2>/dev/null
-        done
-    } | sort | uniq | \
-      fzf --height 40% --prompt="🚀 Projet: " \
-          --preview="echo '📁 {}' && ls -la --color=always {} 2>/dev/null | head -10")
-    
-    if [[ -n "$project_dir" ]]; then
-        cd "$project_dir"
-        echo "✅ Navigation vers: $project_dir"
-        command -v zoxide >/dev/null && zoxide add "$project_dir"
-        
-        local session_name=$(basename "$project_dir")
-        
-        if command -v tmux >/dev/null 2>&1; then
-            if tmux has-session -t "$session_name" 2>/dev/null; then
-                echo "✅ Session '$session_name' exists - attaching..."
-                tmux attach-session -t "$session_name"
-            else
-                echo "🚀 Creating new dev session: $session_name"
-                
-                tmux new-session -d -s "$session_name" -c "$project_dir"
-                tmux split-window -h -t "$session_name:0" -c "$project_dir"
-                tmux split-window -v -t "$session_name:0.1" -c "$project_dir"
-                tmux split-window -v -t "$session_name:0.0" -c "$project_dir"
-                
-                if [[ -f "$project_dir/package.json" ]]; then
-                    tmux send-keys -t "$session_name:0.0" 'nvim .' C-m
-                    tmux send-keys -t "$session_name:0.1" 'npm run dev'
-                elif [[ -f "$project_dir/Cargo.toml" ]]; then
-                    tmux send-keys -t "$session_name:0.0" 'nvim .' C-m
-                    tmux send-keys -t "$session_name:0.1" 'cargo run'
-                elif [[ -f "$project_dir/go.mod" ]]; then
-                    tmux send-keys -t "$session_name:0.0" 'nvim .' C-m
-                    tmux send-keys -t "$session_name:0.1" 'go run .'
-                else
-                    tmux send-keys -t "$session_name:0.0" 'nvim .' C-m
-                    tmux send-keys -t "$session_name:0.1" "echo '🚀 Project: $session_name'" C-m
-                fi
-                
-                tmux send-keys -t "$session_name:0.2" 'git status' C-m
-                tmux select-pane -t "$session_name:0.0"
-                
-                tmux attach-session -t "$session_name"
-            fi
-        else
-            echo "⚠️ tmux not installed - staying in directory"
-        fi
-    else
-        echo "❌ Aucun projet sélectionné"
-    fi
-}
+# Load modular components for better maintainability
+source "${0:A:h}/modules/project-switcher.zsh"
 
-# Quick alias for project switcher
-unalias sp 2>/dev/null
-sp() {
-    project_switch
-}
+# Ensure sp alias is available globally
+alias sp='project_switch'
 
 # ===============================
 # 💡 HELP SYSTEM
@@ -344,7 +273,8 @@ commands() {
     echo "  jp <query>        - Jump to project (no conflict)"
     echo "  jj <query>        - Alias for jp"
     echo "  kcef              - Go to KCE/Gerasso project"
-    echo "  sp                - Project switcher with auto tmux"
+    echo "  sp                - Project switcher with auto tmux (fd powered)"
+    echo "  spd               - Project switcher debug mode"
     echo ""
     echo -e "\033[0;32m🪟 Tmux:\033[0m"
     echo "  tm new [name]     - Create/attach session"
