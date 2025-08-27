@@ -26,9 +26,10 @@ if command -v eza >/dev/null 2>&1; then
 elif command -v tree >/dev/null 2>&1; then
     alias tree='tree -C -L 3'
 else
-    # Fallback tree function using find (when tree command doesn't exist)
-    unalias tree 2>/dev/null || true
-    tree() {
+    # Create tree function when no tree command exists
+    # Note: using different approach to avoid alias conflicts
+    alias tree='_tree_fallback'
+    _tree_fallback() {
         local dir="${1:-.}"
         local level="${2:-3}"
         find "$dir" -type d -not -path '*/.*' | head -20 | sed -e 's/[^-][^\/]*\//  |/g' -e 's/|\([^ ]\)/|-\1/'
