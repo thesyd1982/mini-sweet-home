@@ -93,4 +93,4 @@ alias mv='mv -i'
 # ===============================
 # 🏠 MSH HELPERS
 # ===============================
-alias aliases='nvim ~/mini-sweet-home/configs/shell/zsh/aliases.zsh'
+alias aliases='nvim ~/mini-sweet-home/config/shell/zsh/aliases.zsh'
