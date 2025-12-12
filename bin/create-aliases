@@ -1,0 +1,37 @@
+#!/bin/bash
+# MSH v3.0 - Create convenient aliases
+
+echo "🔗 Creating MSH aliases..."
+
+# Create aliases file
+cat > ~/.msh_aliases << 'EOF'
+# MSH v3.0 Convenient Aliases
+# Add to your ~/.zshrc or ~/.bashrc: source ~/.msh_aliases
+
+# MSH shortcuts
+alias m='./msh'
+alias mi='./msh install'  
+alias mt='./msh test'
+alias ms='./msh status'
+
+# Make shortcuts
+alias mki='make install'
+alias mkt='make test'
+alias mks='make status'
+
+# Quick navigation to MSH
+alias cdmsh='cd ~/mini-sweet-home'
+alias gomsh='cd ~/mini-sweet-home && ls'
+EOF
+
+echo "✅ Aliases created in ~/.msh_aliases"
+echo
+echo "💡 To use them, add this to your ~/.zshrc:"
+echo "   source ~/.msh_aliases"
+echo
+echo "Then you can use:"
+echo "  m install    # ./msh install"
+echo "  mt           # ./msh test"  
+echo "  ms           # ./msh status"
+echo "  mki          # make install"
+echo "  cdmsh        # cd ~/mini-sweet-home"

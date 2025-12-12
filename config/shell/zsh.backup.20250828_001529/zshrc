@@ -1,0 +1,32 @@
+# ===============================
+# 🏠 MINI SWEET HOME - ZSH CONFIG
+# ===============================
+
+# Path setup
+export PATH="$HOME/.local/bin:$PATH"
+
+# ZSH settings (load early)
+autoload -Uz compinit && compinit
+setopt AUTO_CD HIST_IGNORE_DUPS HIST_IGNORE_SPACE SHARE_HISTORY
+HISTFILE=~/.zsh_history
+HISTSIZE=10000
+SAVEHIST=10000
+
+# Load Mini Sweet Home configs BEFORE modern tools
+MSH_CONFIG_DIR="$HOME/mini-sweet-home/configs/shell/zsh"
+if [[ -d "$MSH_CONFIG_DIR" ]]; then
+    [[ -f "$MSH_CONFIG_DIR/exports.zsh" ]] && source "$MSH_CONFIG_DIR/exports.zsh"
+    [[ -f "$MSH_CONFIG_DIR/functions.zsh" ]] && source "$MSH_CONFIG_DIR/functions.zsh"
+    # Load aliases but UNSET conflicting cd alias before zoxide
+    [[ -f "$MSH_CONFIG_DIR/aliases.zsh" ]] && source "$MSH_CONFIG_DIR/aliases.zsh"
+    
+    # Remove problematic cd alias if it exists
+    unalias cd 2>/dev/null || true
+    
+    [[ -f "$MSH_CONFIG_DIR/prompt.zsh" ]] && source "$MSH_CONFIG_DIR/prompt.zsh"
+fi
+
+# Initialize modern tools AFTER loading configs
+# zoxide init moved to exports.zsh
+
+# Note: Starship removed - using minimal lambda prompt from prompt.zsh

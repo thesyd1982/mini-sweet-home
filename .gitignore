@@ -101,6 +101,36 @@ benchmark-results.json
 performance.log
 
 # ===============================
+# 📝 DOCUMENTATION & ANALYSIS FILES
+# ===============================
+# Ignore temporary analysis and documentation files
+# Keep README files and docs/ directory for project documentation
+
+# Temporary analysis files
+*ANALYSIS*.md
+*RECOMMENDATIONS*.md
+FINAL_*.md
+MSH_PATH_*.md
+*TEMP*.md
+*DRAFT*.md
+*DEBUG*.md
+
+# Temporary documentation
+temp-*.md
+draft-*.md
+notes-*.md
+
+# Keep important documentation
+!README.md
+!readme.md
+!README.MD
+!readme.MD
+!docs/
+!docs/*.md
+!config/*/README.md
+!configs/*/README.md
+
+# ===============================
 # 🔧 SYSTEM FILES
 # ===============================
 # Linux

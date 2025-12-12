@@ -1,0 +1,351 @@
+#!/bin/bash
+# MSH v3.0 - Mini Sweet Home Unified Command
+# Professional modular architecture with bin/, lib/, config/
+
+set -euo pipefail
+
+# Detect MSH directory with multiple strategies
+detect_msh_directory() {
+    # Strategy 1: Environment variable
+    if [[ -n "${MSH_PROJECT_DIR:-}" ]] && validate_msh_directory "$MSH_PROJECT_DIR"; then
+        echo "$MSH_PROJECT_DIR"
+        return 0
+    fi
+    
+    # Strategy 2: System installation (improved)
+    if [[ "$(basename "$0")" == "msh" && "$(dirname "$0")" == "$HOME/.local/bin" ]]; then
+        local locations=("$HOME/mini-sweet-home" "$HOME/.config/msh" "$HOME/Development/mini-sweet-home")
+        for location in "${locations[@]}"; do
+            if validate_msh_directory "$location"; then
+                echo "$location"
+                return 0
+            fi
+        done
+    fi
+    
+    # Strategy 3: Direct execution
+    local direct_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    if validate_msh_directory "$direct_dir"; then
+        echo "$direct_dir"
+        return 0
+    fi
+    
+    return 1
+}
+
+validate_msh_directory() {
+    local dir="$1"
+    [[ -d "$dir" && -f "$dir/msh" && -d "$dir/lib" && 
+       -f "$dir/lib/core/common.sh" ]]
+}
+
+# Main detection
+SCRIPT_DIR="$(detect_msh_directory)"
+if [[ $? -ne 0 ]]; then
+    echo "❌ Error: MSH directory not found" >&2
+    echo "💡 Try: export MSH_PROJECT_DIR=/path/to/msh" >&2
+    echo "💡 Or ensure MSH is installed at ~/mini-sweet-home" >&2
+    exit 1
+fi
+readonly SCRIPT_DIR
+BIN_DIR="$SCRIPT_DIR/bin"
+readonly BIN_DIR
+LIB_DIR="$SCRIPT_DIR/lib" 
+readonly LIB_DIR
+CONFIG_DIR="$SCRIPT_DIR/config"
+readonly CONFIG_DIR
+
+# Load core modules
+# shellcheck source=lib/core/common.sh
+source "$LIB_DIR/core/common.sh"
+# shellcheck source=lib/utils/validation.sh  
+source "$LIB_DIR/utils/validation.sh"
+
+# Display help information
+show_help() {
+    show_banner "MSH v3.0"
+    echo "Usage: msh <command> [options]"
+    echo
+    echo -e "${GREEN}Installation & Setup:${NC}"
+    echo "  install           - Install MSH with intelligent symlink management"
+    echo "  reinstall         - Reinstall everything from scratch"  
+    echo "  clean             - Complete uninstall with backup restoration"
+    echo "  uninstall         - Alias for clean"
+    echo
+    echo -e "${GREEN}Testing & Validation:${NC}"
+    echo "  test              - Run comprehensive system test"
+    echo "  status            - Show detailed system status"
+    echo
+    echo -e "${GREEN}Utilities:${NC}"
+    echo "  aliases           - Create convenient shell aliases"
+    echo "  debug-path        - Debug MSH directory detection"
+    echo
+    echo -e "${GREEN}Examples:${NC}"
+    echo "  msh install       - Install with automatic config backup"
+    echo "  msh test          - Test your complete setup"
+    echo "  msh status        - Check what's working"
+    echo "  msh clean         - Completely uninstall and restore originals"
+    echo "  msh aliases       - Setup convenient shortcuts"
+}
+
+# Handle install command
+handle_install() {
+    local install_type="${1:-full}"
+    
+    # Load installation module
+    # shellcheck source=lib/core/install.sh
+    source "$LIB_DIR/core/install.sh"
+    
+    case "$install_type" in
+        full|"")
+            install_msh_system "full"
+            ;;
+        minimal|quick)
+            install_minimal
+            ;;
+        repair)
+            repair_installation
+            ;;
+        *)
+            log_error "Invalid install type: $install_type"
+            echo "Valid types: full, minimal, repair"
+            return 1
+            ;;
+    esac
+}
+
+# Handle clean command  
+handle_clean() {
+    # Load clean module
+    # shellcheck source=lib/core/clean.sh
+    source "$LIB_DIR/core/clean.sh"
+    
+    clean_msh_system
+}
+
+# Handle test command
+handle_test() {
+    # Load testing module
+    # shellcheck source=lib/testing.sh
+    if source "$LIB_DIR/testing.sh" 2>/dev/null; then
+        run_msh_test
+    else
+        log_error "Testing library not found: $LIB_DIR/testing.sh"
+        return 1
+    fi
+}
+
+# Handle status command
+handle_status() {
+    show_banner "MSH System Status"
+    
+    # Check structure
+    log_section "📁 Project Structure"
+    echo "  bin/    $(ls -1 "$BIN_DIR" 2>/dev/null | wc -l) executables"
+    echo "  lib/    $(find "$LIB_DIR" -name "*.sh" 2>/dev/null | wc -l) libraries"
+    echo "  config/ $(find "$CONFIG_DIR" -name "*.zsh" -o -name "*.lua" 2>/dev/null | wc -l) configuration files"
+    echo
+    
+    # Check tools
+    log_section "🛠️ Modern Tools"
+    local tools=("fzy" "rg" "fd" "bat" "eza" "dust" "zoxide" "cmake")
+    local available=0
+    
+    for tool in "${tools[@]}"; do
+        if command_exists "$tool"; then
+            log_success "$tool"
+            available=$((available + 1))
+        else
+            echo -e "  ${YELLOW}○ $tool (fallback active)${NC}"
+        fi
+    done
+    echo "  Available: $available/${#tools[@]} tools"
+    echo
+    
+    # Check functions
+    if source "$CONFIG_DIR/shell/zsh/functions.zsh" 2>/dev/null && declare -f tm >/dev/null; then
+        log_success "Personal functions loaded (tm, gq, jp, kcef)"
+    else
+        log_warning "Personal functions not loaded"
+    fi
+    
+    # Check fallbacks
+    # shellcheck source=lib/fallbacks.sh
+    if source "$LIB_DIR/fallbacks.sh" quiet 2>/dev/null; then
+        log_success "Intelligent fallbacks active"
+        echo "  Fuzzy: $MSH_FUZZY_FINDER | List: $MSH_LIST_TOOL | Grep: $MSH_GREP_TOOL"
+    else
+        log_warning "Fallbacks not loaded"
+    fi
+    
+    # Check installation profile
+    # shellcheck source=lib/core/profile.sh
+    source "$LIB_DIR/core/profile.sh"
+    if detect_existing_installation; then
+        echo
+        log_success "MSH installation detected"
+        
+        # Show basic profile information directly
+        if [[ -f "$HOME/.msh-version" ]]; then
+            local version date install_type
+            version=$(grep "MSH_INSTALLED_VERSION" "$HOME/.msh-version" | cut -d'=' -f2 | tr -d '"')
+            date=$(grep "MSH_INSTALL_DATE" "$HOME/.msh-version" | cut -d'=' -f2 | tr -d '"')
+            install_type=$(grep "MSH_INSTALL_TYPE" "$HOME/.msh-version" | cut -d'=' -f2 | tr -d '"')
+            
+            echo "  Version: ${version:-unknown}"
+            echo "  Install Date: ${date:-unknown}"  
+            echo "  Install Type: ${install_type:-unknown}"
+            echo "  System Command: ~/.local/bin/msh"
+            echo "  Active Symlinks: 3 configuration files"
+        else
+            echo "  Profile file not found"
+        fi
+    else
+        echo
+        log_info "No MSH installation profile found"
+    fi
+}
+
+# Handle aliases command
+handle_aliases() {
+    log_info "Creating convenient aliases..."
+    if "$BIN_DIR/create-aliases"; then
+        log_success "Aliases created successfully"
+    else
+        log_error "Failed to create aliases"
+        return 1
+    fi
+}
+
+# Handle debug-path command
+handle_debug_path() {
+    show_banner "MSH Path Detection Debug"
+    
+    echo -e "${GREEN}🔍 Detection Strategies:${NC}"
+    echo
+    
+    # Strategy 1: Environment variable
+    echo -e "${CYAN}1. Environment Variable (MSH_PROJECT_DIR):${NC}"
+    if [[ -n "${MSH_PROJECT_DIR:-}" ]]; then
+        echo "  Value: $MSH_PROJECT_DIR"
+        if validate_msh_directory "$MSH_PROJECT_DIR"; then
+            log_success "Valid MSH directory"
+        else
+            log_error "Invalid MSH directory"
+        fi
+    else
+        echo "  Not set"
+    fi
+    echo
+    
+    # Strategy 2: System installation
+    echo -e "${CYAN}2. System Installation Detection:${NC}"
+    echo "  Script name: $(basename "$0")"
+    echo "  Script path: $(dirname "$0")"
+    if [[ "$(basename "$0")" == "msh" && "$(dirname "$0")" == "$HOME/.local/bin" ]]; then
+        echo "  System installation detected"
+        local locations=("$HOME/mini-sweet-home" "$HOME/.config/msh" "$HOME/Development/mini-sweet-home")
+        for location in "${locations[@]}"; do
+            echo -n "  Checking $location: "
+            if validate_msh_directory "$location"; then
+                log_success "Found"
+            else
+                echo -e "${YELLOW}Not found${NC}"
+            fi
+        done
+    else
+        echo "  Not a system installation"
+    fi
+    echo
+    
+    # Strategy 3: Direct execution
+    echo -e "${CYAN}3. Direct Execution:${NC}"
+    local direct_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    echo "  Script directory: $direct_dir"
+    if validate_msh_directory "$direct_dir"; then
+        log_success "Valid MSH directory"
+    else
+        log_error "Invalid MSH directory"
+    fi
+    echo
+    
+    # Final result
+    echo -e "${GREEN}🎯 Final Detection Result:${NC}"
+    echo "  MSH Directory: $SCRIPT_DIR"
+    echo "  Detection method: $(detect_msh_strategy)"
+    
+    # Validation
+    echo
+    echo -e "${GREEN}✅ Directory Validation:${NC}"
+    echo "  msh script: $(test -f "$SCRIPT_DIR/msh" && echo "✅" || echo "❌")"
+    echo "  lib/ directory: $(test -d "$SCRIPT_DIR/lib" && echo "✅" || echo "❌")"
+    echo "  common.sh: $(test -f "$SCRIPT_DIR/lib/core/common.sh" && echo "✅" || echo "❌")"
+    echo "  bin/ directory: $(test -d "$SCRIPT_DIR/bin" && echo "✅" || echo "❌")"
+    echo "  config/ directory: $(test -d "$SCRIPT_DIR/config" && echo "✅" || echo "❌")"
+}
+
+detect_msh_strategy() {
+    if [[ -n "${MSH_PROJECT_DIR:-}" ]] && validate_msh_directory "$MSH_PROJECT_DIR"; then
+        echo "Environment variable (MSH_PROJECT_DIR)"
+    elif [[ "$(basename "$0")" == "msh" && "$(dirname "$0")" == "$HOME/.local/bin" ]]; then
+        echo "System installation"
+    else
+        echo "Direct execution"
+    fi
+}
+
+# Main function
+main() {
+    local command="${1:-help}"
+    shift || true
+    
+    # Validate environment
+    if ! validate_environment; then
+        log_error "MSH environment validation failed"
+        return 1
+    fi
+    
+    # Validate command
+    if ! validate_command "$command"; then
+        log_error "Invalid command: $command"
+        echo "Run 'msh help' for usage information"
+        return 1
+    fi
+    
+    # Dispatch to appropriate handler
+    case "$command" in
+        install|i)
+            handle_install "$@"
+            ;;
+        reinstall)
+            log_info "Reinstalling MSH..."
+            handle_install "full" "$@"
+            ;;
+        clean|uninstall)
+            handle_clean "$@"
+            ;;
+        test|t)
+            handle_test "$@"
+            ;;
+        status|s)
+            handle_status "$@"
+            ;;
+        aliases|a)
+            handle_aliases "$@"
+            ;;
+        debug-path)
+            handle_debug_path "$@"
+            ;;
+        help|--help|-h|"")
+            show_help
+            ;;
+        *)
+            log_error "Unknown command: $command"
+            echo "Run 'msh help' for usage information"
+            return 1
+            ;;
+    esac
+}
+
+# Execute main function with all arguments
+main "$@"

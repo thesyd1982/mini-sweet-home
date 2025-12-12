@@ -1,0 +1,34 @@
+#!/bin/bash
+# ===============================
+# 🏠 MINI SWEET HOME - BASH CONFIG
+# ===============================
+
+# Path setup
+export PATH="$HOME/.local/bin:$PATH"
+
+# Bash settings
+shopt -s histappend
+HISTCONTROL=ignoreboth
+HISTSIZE=10000
+HISTFILESIZE=20000
+
+# Load Mini Sweet Home configs
+MSH_CONFIG_DIR="$HOME/mini-sweet-home/config/shell/bash"
+if [[ -d "$MSH_CONFIG_DIR" ]]; then
+    [[ -f "$MSH_CONFIG_DIR/aliases.bash" ]] && source "$MSH_CONFIG_DIR/aliases.bash"
+fi
+
+# MSH v3.0 - Load intelligent fallbacks
+MSH_FALLBACKS_SCRIPT="$HOME/mini-sweet-home/lib/fallbacks.sh"
+if [[ -f "$MSH_FALLBACKS_SCRIPT" ]]; then
+    source "$MSH_FALLBACKS_SCRIPT" quiet 2>/dev/null || true
+fi
+
+# Enable programmable completion features
+if ! shopt -oq posix; then
+  if [[ -f /usr/share/bash-completion/bash_completion ]]; then
+    . /usr/share/bash-completion/bash_completion
+  elif [[ -f /etc/bash_completion ]]; then
+    . /etc/bash_completion
+  fi
+fi
