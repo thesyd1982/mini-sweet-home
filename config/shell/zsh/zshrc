@@ -14,6 +14,7 @@ SAVEHIST=10000
 
 # Load Mini Sweet Home configs BEFORE modern tools
 MSH_CONFIG_DIR="$HOME/mini-sweet-home/config/shell/zsh"
+
 if [[ -d "$MSH_CONFIG_DIR" ]]; then
     [[ -f "$MSH_CONFIG_DIR/exports.zsh" ]] && source "$MSH_CONFIG_DIR/exports.zsh"
     [[ -f "$MSH_CONFIG_DIR/functions.zsh" ]] && source "$MSH_CONFIG_DIR/functions.zsh"
