@@ -88,5 +88,35 @@ fi
 # ===============================
 export PATH=/home/thesyd/.opencode/bin:$PATH
 export FUNCNEST=1000
-export PERPLEXITY_API_KEY=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
-export GOOGLE_GENERATIVE_AI_API_KEY="AIzaSyAFlGlM15gyyj1y4WbQWGtBLgIXt499eMs"
+# ===============================
+# 🔐 SECRETS MANAGEMENT
+# ===============================
+# Load environment variables from .env file (gitignored)
+MSH_ENV_FILE="$HOME/mini-sweet-home/.env"
+if [[ -f "$MSH_ENV_FILE" ]]; then
+    # Use set -a to automatically export variables, then source the file
+    set -a
+    source "$MSH_ENV_FILE" 2>/dev/null || {
+        # Fallback: manual parsing if source fails
+        while IFS='=' read -r key value || [[ -n "$key" ]]; do
+            # Skip comments and empty lines
+            [[ "$key" =~ ^[[:space:]]*# ]] && continue
+            [[ -z "${key// }" ]] && continue
+            
+            # Clean key and value
+            key=$(echo "$key" | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
+            value=$(echo "$value" | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
+            
+            # Export if valid variable name
+            if [[ "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] && [[ -n "$value" ]]; then
+                export "$key"="$value"
+            fi
+        done < "$MSH_ENV_FILE"
+    }
+    set +a
+else
+    # Warn if .env doesn't exist but template does
+    if [[ -f "$HOME/mini-sweet-home/.env.template" ]]; then
+        echo "⚠️  MSH: .env file not found. Copy .env.template to .env and configure your secrets."
+    fi
+fi

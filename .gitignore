@@ -26,10 +26,23 @@ configs/ssh/authorized_keys
 .git-credentials
 .gitconfig.local
 
-# Environment files
+# Environment files & secrets
 .env
 .env.local
 .env.production
+.env.development
+.env.staging
+.env.test
+*.env
+secrets.zsh
+secrets.bash
+secrets.ps1
+api-keys.txt
+credentials.json
+*.key
+*.pem
+*.p12
+*.pfx
 
 # ===============================
 # 📦 DEPENDENCIES & CACHES

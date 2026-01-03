@@ -78,6 +78,7 @@ show_help() {
     echo
     echo -e "${GREEN}Utilities:${NC}"
     echo "  aliases           - Create convenient shell aliases"
+    echo "  secrets           - Manage environment variables and API keys"
     echo "  debug-path        - Debug MSH directory detection"
     echo
     echo -e "${GREEN}Examples:${NC}"
@@ -86,6 +87,7 @@ show_help() {
     echo "  msh status        - Check what's working"
     echo "  msh clean         - Completely uninstall and restore originals"
     echo "  msh aliases       - Setup convenient shortcuts"
+    echo "  msh secrets init  - Setup your API keys and secrets"
 }
 
 # Handle install command
@@ -217,6 +219,16 @@ handle_aliases() {
     fi
 }
 
+# Handle secrets command
+handle_secrets() {
+    if "$BIN_DIR/msh-secrets" "$@"; then
+        return 0
+    else
+        log_error "Secrets management failed"
+        return 1
+    fi
+}
+
 # Handle debug-path command
 handle_debug_path() {
     show_banner "MSH Path Detection Debug"
@@ -332,6 +344,9 @@ main() {
             ;;
         aliases|a)
             handle_aliases "$@"
+            ;;
+        secrets)
+            handle_secrets "$@"
             ;;
         debug-path)
             handle_debug_path "$@"
