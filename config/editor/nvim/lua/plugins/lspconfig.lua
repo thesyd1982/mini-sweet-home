@@ -99,7 +99,7 @@ return {
 				emmet_ls = {
 					filetypes = {
 						"gopls",
-						-- "gotexttmpl",
+						--"gotexttmpl",
 						"templ",
 						"template",
 						"html",
@@ -120,7 +120,15 @@ return {
 				rust_analyzer = {},
 				intelephense = {},
 				cmake = {},
-				html = { filetypes = { "html", "templ" } },
+				html = {
+					filetypes = {
+						"html",
+						"templ",
+						"gotmpl",
+						--"gotexttmpl",
+						"gohtmltmpl",
+					},
+				},
 				templ = { filetypes = { "templ" } },
 				biome = {},
 				ts_ls = {

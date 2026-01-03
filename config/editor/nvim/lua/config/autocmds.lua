@@ -33,7 +33,7 @@ vim.api.nvim_create_autocmd("BufEnter", {
 })
 
 vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
-	pattern = { "*.tmpl", "gotmpl", "gotexttmpl" },
+	pattern = { "*.tmpl", "*.gotmpl", "*.gohtml" },
 	command = "set filetype=gotmpl",
 })
 
@@ -43,3 +43,4 @@ vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
 		vim.opt_local.spell = false
 	end,
 })
+vim.treesitter.language.register("gotmpl", { "gotexttmpl", "gohtmltmpl" })

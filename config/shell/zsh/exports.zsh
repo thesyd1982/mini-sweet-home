@@ -8,7 +8,7 @@
 # 🛤️ PATH ESSENTIELS
 # ===============================
 export PATH="$HOME/mini-sweet-home/bin:$HOME/bin:/usr/local/bin:$HOME/.local/bin:/usr/local/go/bin:/usr/bin:/bin:/usr/sbin:/sbin:$HOME/.cargo/bin"
-
+export PATH="$HOME/.local/bin:$PATH"
 # ===============================
 # 🌍 ENVIRONNEMENT DE BASE
 # ===============================
@@ -88,3 +88,5 @@ fi
 # ===============================
 export PATH=/home/thesyd/.opencode/bin:$PATH
 export FUNCNEST=1000
+export PERPLEXITY_API_KEY=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
+export GOOGLE_GENERATIVE_AI_API_KEY="AIzaSyAFlGlM15gyyj1y4WbQWGtBLgIXt499eMs"
