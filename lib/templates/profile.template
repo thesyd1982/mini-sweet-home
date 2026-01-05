@@ -1,0 +1,16 @@
+# MSH Installation Profile Template
+# Generated on {DATE}
+MSH_INSTALLED_VERSION="{VERSION}"
+MSH_INSTALL_DATE="{INSTALL_DATE}"
+MSH_INSTALL_TYPE="{INSTALL_TYPE}"
+MSH_SCRIPT_DIR="{SCRIPT_DIR}"
+MSH_INSTALL_USER="{USER}"
+MSH_INSTALL_HOST="{HOSTNAME}"
+
+# Installation components
+MSH_SYSTEM_COMMAND="{HOME}/.local/bin/msh"
+MSH_LOG_FILE="{HOME}/.msh-install.log"
+MSH_BACKUP_INDEX="{HOME}/.msh-install.log.backups"
+
+# Symlinks created (populated during installation)
+MSH_CREATED_SYMLINKS=""
