@@ -296,6 +296,7 @@ handle_debug_path() {
     echo "  config/ directory: $(test -d "$SCRIPT_DIR/config" && echo "✅" || echo "❌")"
 }
 
+
 detect_msh_strategy() {
     if [[ -n "${MSH_PROJECT_DIR:-}" ]] && validate_msh_directory "$MSH_PROJECT_DIR"; then
         echo "Environment variable (MSH_PROJECT_DIR)"
