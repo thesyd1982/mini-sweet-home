@@ -6,13 +6,21 @@
 # 💾 BACKUPS & TEMPORARY FILES
 # ===============================
 *.backup
+*.backup.*
 *.bak
+*.old
 *.tmp
 *.swp
 *.swo
 *~
 .DS_Store
 Thumbs.db
+
+# MSH specific backup files
+msh.backup*
+msh-*.backup
+*-improved.sh
+test-*.sh
 
 # ===============================
 # 🔐 SENSITIVE DATA
