@@ -106,7 +106,6 @@ private/
 
 # Neovim specific
 lazy-lock.json
-.luarc.json
 
 # Benchmark results
 benchmark-results.json
