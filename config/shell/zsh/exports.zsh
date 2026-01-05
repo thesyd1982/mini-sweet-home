@@ -71,14 +71,37 @@ zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
 # 🎨 ZSH PLUGINS (EXTERNES - PERFORMANTS)
 # ===============================
 # Utilisation des vrais plugins ZSH pour une expérience optimale
-[[ -f ~/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && 
-    source ~/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+# Support multi-OS: packages système (Arch/Fedora) et installation manuelle (Ubuntu/macOS)
 
-if [[ -f ~/.zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
-    source ~/.zsh-autosuggestions/zsh-autosuggestions.zsh
+# Syntax Highlighting Plugin
+if [[ -f /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; then
+    # Arch Linux system package
+    source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+elif [[ -f /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; then
+    # Fedora system package
+    source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+elif [[ -f ~/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; then
+    # Manual installation (Ubuntu/macOS)
+    source ~/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+fi
+
+# Autosuggestions Plugin
+if [[ -f /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
+    # Arch Linux system package
+    source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
     ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=240'
     # Compatibility with vi mode
     bindkey '^[[Z' autosuggest-accept  # Shift-Tab to accept suggestion
+elif [[ -f /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
+    # Fedora system package
+    source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+    ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=240'
+    bindkey '^[[Z' autosuggest-accept
+elif [[ -f ~/.zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
+    # Manual installation (Ubuntu/macOS)
+    source ~/.zsh-autosuggestions/zsh-autosuggestions.zsh
+    ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=240'
+    bindkey '^[[Z' autosuggest-accept
 fi
 
 # ===============================

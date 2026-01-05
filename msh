@@ -400,6 +400,7 @@ handle_core_tools() {
             echo "  • tmux        - Terminal multiplexer"
             echo "  • nvim        - Modern text editor"
             echo "  • nerd-fonts  - Icon fonts for terminal"
+            echo "  • zsh-plugins - Syntax highlighting + autosuggestions"
             echo
             echo "Examples:"
             echo "  msh core-tools           # Show status"

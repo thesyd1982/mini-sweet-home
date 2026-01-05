@@ -21,6 +21,7 @@ declare -A CORE_TOOLS=(
     ["tmux"]="Terminal Multiplexer" 
     ["nvim"]="Neovim Editor"
     ["nerd-fonts"]="Nerd Fonts (for icons)"
+    ["zsh-plugins"]="ZSH Plugins (syntax highlighting + autosuggestions)"
 )
 
 # Packages par OS pour chaque outil
@@ -29,6 +30,7 @@ declare -A UBUNTU_PACKAGES=(
     ["tmux"]="tmux"
     ["nvim"]="neovim"
     ["nerd-fonts"]="fonts-firacode"
+    ["zsh-plugins"]="manual"
 )
 
 declare -A ARCH_PACKAGES=(
@@ -36,6 +38,7 @@ declare -A ARCH_PACKAGES=(
     ["tmux"]="tmux"
     ["nvim"]="neovim"
     ["nerd-fonts"]="ttf-firacode-nerd"
+    ["zsh-plugins"]="zsh-syntax-highlighting zsh-autosuggestions"
 )
 
 declare -A FEDORA_PACKAGES=(
@@ -43,6 +46,7 @@ declare -A FEDORA_PACKAGES=(
     ["tmux"]="tmux"
     ["nvim"]="neovim"
     ["nerd-fonts"]="fira-code-fonts"
+    ["zsh-plugins"]="zsh-syntax-highlighting zsh-autosuggestions"
 )
 
 declare -A MACOS_PACKAGES=(
@@ -50,6 +54,7 @@ declare -A MACOS_PACKAGES=(
     ["tmux"]="tmux"
     ["nvim"]="neovim"
     ["nerd-fonts"]="font-fira-code-nerd-font"
+    ["zsh-plugins"]="manual"
 )
 
 # ===============================
@@ -63,6 +68,12 @@ check_core_tool() {
     # Cas spécial pour les Nerd Fonts
     if [[ "$tool" == "nerd-fonts" ]]; then
         check_nerd_fonts
+        return $?
+    fi
+    
+    # Cas spécial pour les plugins ZSH
+    if [[ "$tool" == "zsh-plugins" ]]; then
+        check_zsh_plugins
         return $?
     fi
     
@@ -107,6 +118,46 @@ check_nerd_fonts() {
         "fedora"|"rhel"|"centos")
             # Vérifier via dnf
             if dnf list installed | grep -iE "(fira.*code|jetbrains)" >/dev/null 2>&1; then
+                return 0
+            fi
+            ;;
+    esac
+    
+    return 1
+}
+
+# Vérifier si les plugins ZSH sont installés
+check_zsh_plugins() {
+    local os="$(detect_os)"
+    
+    case "$os" in
+        "arch")
+            # Vérifier via pacman pour les packages système
+            if pacman -Qs zsh-syntax-highlighting >/dev/null 2>&1 && pacman -Qs zsh-autosuggestions >/dev/null 2>&1; then
+                return 0
+            fi
+            ;;
+        "ubuntu"|"debian")
+            # Vérifier les installations manuelles dans le home
+            if [[ -f "$HOME/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]] && 
+               [[ -f "$HOME/.zsh-autosuggestions/zsh-autosuggestions.zsh" ]]; then
+                return 0
+            fi
+            ;;
+        "fedora"|"rhel"|"centos")
+            # Vérifier via dnf
+            if dnf list installed zsh-syntax-highlighting >/dev/null 2>&1 && dnf list installed zsh-autosuggestions >/dev/null 2>&1; then
+                return 0
+            fi
+            ;;
+        "macos")
+            # Vérifier via brew ou installation manuelle
+            if brew list zsh-syntax-highlighting >/dev/null 2>&1 && brew list zsh-autosuggestions >/dev/null 2>&1; then
+                return 0
+            fi
+            # Fallback: vérifier installation manuelle
+            if [[ -f "$HOME/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]] && 
+               [[ -f "$HOME/.zsh-autosuggestions/zsh-autosuggestions.zsh" ]]; then
                 return 0
             fi
             ;;
@@ -184,6 +235,12 @@ install_core_tool() {
     # Cas spécial pour les Nerd Fonts
     if [[ "$tool" == "nerd-fonts" ]]; then
         install_nerd_fonts
+        return $?
+    fi
+    
+    # Cas spécial pour les plugins ZSH
+    if [[ "$tool" == "zsh-plugins" ]]; then
+        install_zsh_plugins
         return $?
     fi
     
@@ -353,6 +410,106 @@ install_nerd_font_manual() {
     return 1
 }
 
+# Installer les plugins ZSH selon l'OS
+install_zsh_plugins() {
+    local os="$(detect_os)"
+    local package_manager="$(detect_package_manager)"
+    
+    echo "🧠 Installing ZSH plugins on $os..."
+    
+    case "$package_manager" in
+        "apt")
+            # Ubuntu/Debian: installation manuelle
+            install_zsh_plugins_manual
+            return $?
+            ;;
+        "yay")
+            if yay -S --noconfirm zsh-syntax-highlighting zsh-autosuggestions >/dev/null 2>&1; then
+                log_success "ZSH plugins installed via yay"
+                return 0
+            fi
+            ;;
+        "paru")
+            if paru -S --noconfirm zsh-syntax-highlighting zsh-autosuggestions >/dev/null 2>&1; then
+                log_success "ZSH plugins installed via paru"
+                return 0
+            fi
+            ;;
+        "pacman")
+            if sudo pacman -S --noconfirm zsh-syntax-highlighting zsh-autosuggestions >/dev/null 2>&1; then
+                log_success "ZSH plugins installed via pacman"
+                return 0
+            fi
+            ;;
+        "dnf")
+            if sudo dnf install -y zsh-syntax-highlighting zsh-autosuggestions >/dev/null 2>&1; then
+                log_success "ZSH plugins installed via dnf"
+                return 0
+            fi
+            ;;
+        "brew")
+            if brew install zsh-syntax-highlighting zsh-autosuggestions >/dev/null 2>&1; then
+                log_success "ZSH plugins installed via brew"
+                return 0
+            fi
+            ;;
+        *)
+            log_error "Unsupported package manager: $package_manager"
+            return 1
+            ;;
+    esac
+    
+    # Fallback: installation manuelle
+    log_info "Package manager installation failed, trying manual installation..."
+    install_zsh_plugins_manual
+    return $?
+}
+
+# Installation manuelle des plugins ZSH
+install_zsh_plugins_manual() {
+    echo "📥 Installing ZSH plugins manually..."
+    
+    local plugins_dir="$HOME"
+    local success=0
+    
+    # Installer zsh-syntax-highlighting
+    if [[ ! -d "$plugins_dir/.zsh-syntax-highlighting" ]]; then
+        echo "  • Installing zsh-syntax-highlighting..."
+        if git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$plugins_dir/.zsh-syntax-highlighting" >/dev/null 2>&1; then
+            log_success "zsh-syntax-highlighting installed"
+            success=$((success + 1))
+        else
+            log_error "Failed to install zsh-syntax-highlighting"
+        fi
+    else
+        log_info "zsh-syntax-highlighting already exists"
+        success=$((success + 1))
+    fi
+    
+    # Installer zsh-autosuggestions
+    if [[ ! -d "$plugins_dir/.zsh-autosuggestions" ]]; then
+        echo "  • Installing zsh-autosuggestions..."
+        if git clone https://github.com/zsh-users/zsh-autosuggestions.git "$plugins_dir/.zsh-autosuggestions" >/dev/null 2>&1; then
+            log_success "zsh-autosuggestions installed"
+            success=$((success + 1))
+        else
+            log_error "Failed to install zsh-autosuggestions"
+        fi
+    else
+        log_info "zsh-autosuggestions already exists"
+        success=$((success + 1))
+    fi
+    
+    if [[ $success -eq 2 ]]; then
+        log_success "ZSH plugins installed manually"
+        log_info "You may need to restart your shell to see the changes"
+        return 0
+    else
+        log_error "Some ZSH plugins failed to install"
+        return 1
+    fi
+}
+
 # ===============================
 # 🤖 INSTALLATION INTERACTIVE
 # ===============================
@@ -387,6 +544,8 @@ offer_core_tools_installation() {
     echo "  • zsh: Enhanced shell with MSH native features"
     echo "  • tmux: Terminal multiplexer for session management"
     echo "  • nvim: Modern text editor with MSH configuration"
+    echo "  • nerd-fonts: Icon fonts for enhanced terminal display"
+    echo "  • zsh-plugins: Syntax highlighting and autosuggestions"
     echo
     
     # Demander confirmation
@@ -520,6 +679,9 @@ get_tool_version() {
         "nerd-fonts")
             get_nerd_fonts_info
             ;;
+        "zsh-plugins")
+            get_zsh_plugins_info
+            ;;
         *)
             echo "unknown"
             ;;
@@ -553,4 +715,38 @@ get_nerd_fonts_info() {
     else
         echo "Available"
     fi
+}
+
+# Obtenir des informations sur les plugins ZSH installés
+get_zsh_plugins_info() {
+    if ! check_zsh_plugins; then
+        echo "Not installed"
+        return
+    fi
+    
+    local os="$(detect_os)"
+    local info=""
+    
+    case "$os" in
+        "arch")
+            # Vérifier les packages système
+            if pacman -Qs zsh-syntax-highlighting >/dev/null 2>&1 && pacman -Qs zsh-autosuggestions >/dev/null 2>&1; then
+                info="System packages"
+            fi
+            ;;
+        "ubuntu"|"debian"|"macos")
+            # Vérifier les installations manuelles
+            if [[ -d "$HOME/.zsh-syntax-highlighting" ]] && [[ -d "$HOME/.zsh-autosuggestions" ]]; then
+                info="Manual installation"
+            fi
+            ;;
+        "fedora"|"rhel"|"centos")
+            # Vérifier les packages système
+            if dnf list installed zsh-syntax-highlighting >/dev/null 2>&1 && dnf list installed zsh-autosuggestions >/dev/null 2>&1; then
+                info="System packages"
+            fi
+            ;;
+    esac
+    
+    echo "${info:-Available}"
 }
