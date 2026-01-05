@@ -50,3 +50,16 @@ case ":$PATH:" in
   *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
 # pnpm end
+
+# ===============================
+# 🎨 ZSH PLUGINS (FORCE LOAD)
+# ===============================
+# Force loading of ZSH plugins to ensure they work
+[[ -f ~/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && 
+    source ~/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+if [[ -f ~/.zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
+    source ~/.zsh-autosuggestions/zsh-autosuggestions.zsh
+    ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=240'
+    bindkey '^[[Z' autosuggest-accept  # Shift-Tab to accept
+fi
