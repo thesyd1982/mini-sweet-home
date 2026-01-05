@@ -35,7 +35,7 @@ help: ## 🏠 Show this help
 
 install: ## 🚀 Install MSH with all tools
 	@echo "$(GREEN)🚀 Installing MSH v3.0...$(NC)"
-	@./msh install
+	@echo "1" | ./msh install
 
 test: ## 🧪 Test your installation
 	@echo "$(CYAN)🧪 Testing MSH...$(NC)"
