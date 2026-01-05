@@ -20,6 +20,7 @@ declare -A CORE_TOOLS=(
     ["zsh"]="ZSH Shell"
     ["tmux"]="Terminal Multiplexer" 
     ["nvim"]="Neovim Editor"
+    ["nerd-fonts"]="Nerd Fonts (for icons)"
 )
 
 # Packages par OS pour chaque outil
@@ -27,24 +28,28 @@ declare -A UBUNTU_PACKAGES=(
     ["zsh"]="zsh"
     ["tmux"]="tmux"
     ["nvim"]="neovim"
+    ["nerd-fonts"]="fonts-firacode"
 )
 
 declare -A ARCH_PACKAGES=(
     ["zsh"]="zsh"
     ["tmux"]="tmux"
     ["nvim"]="neovim"
+    ["nerd-fonts"]="ttf-firacode-nerd"
 )
 
 declare -A FEDORA_PACKAGES=(
     ["zsh"]="zsh"
     ["tmux"]="tmux"
     ["nvim"]="neovim"
+    ["nerd-fonts"]="fira-code-fonts"
 )
 
 declare -A MACOS_PACKAGES=(
     ["zsh"]="zsh"
     ["tmux"]="tmux"
     ["nvim"]="neovim"
+    ["nerd-fonts"]="font-fira-code-nerd-font"
 )
 
 # ===============================
@@ -55,11 +60,59 @@ declare -A MACOS_PACKAGES=(
 check_core_tool() {
     local tool="$1"
     
+    # Cas spécial pour les Nerd Fonts
+    if [[ "$tool" == "nerd-fonts" ]]; then
+        check_nerd_fonts
+        return $?
+    fi
+    
     if command -v "$tool" >/dev/null 2>&1; then
         return 0
     else
         return 1
     fi
+}
+
+# Vérifier si les Nerd Fonts sont installées
+check_nerd_fonts() {
+    # Vérification universelle via fc-list (plus fiable)
+    if command -v fc-list >/dev/null 2>&1; then
+        # Chercher toute Nerd Font populaire
+        if fc-list | grep -i "nerd" >/dev/null 2>&1; then
+            return 0
+        fi
+        
+        # Chercher des fonts spécifiques avec support d'icônes
+        if fc-list | grep -iE "(fira.*code|jetbrains.*mono|hack|source.*code)" >/dev/null 2>&1; then
+            return 0
+        fi
+    fi
+    
+    # Méthodes de détection selon l'OS (packages)
+    local os="$(detect_os)"
+    
+    case "$os" in
+        "arch")
+            # Vérifier via pacman
+            if pacman -Qs ttf-firacode-nerd >/dev/null 2>&1 || pacman -Qs ttf-jetbrains-mono-nerd >/dev/null 2>&1; then
+                return 0
+            fi
+            ;;
+        "ubuntu"|"debian")
+            # Vérifier via dpkg
+            if dpkg -l | grep -iE "(fira.*code|jetbrains)" >/dev/null 2>&1; then
+                return 0
+            fi
+            ;;
+        "fedora"|"rhel"|"centos")
+            # Vérifier via dnf
+            if dnf list installed | grep -iE "(fira.*code|jetbrains)" >/dev/null 2>&1; then
+                return 0
+            fi
+            ;;
+    esac
+    
+    return 1
 }
 
 # Vérifier tous les outils de base
@@ -127,6 +180,13 @@ get_package_name() {
 # Installer un outil selon l'OS
 install_core_tool() {
     local tool="$1"
+    
+    # Cas spécial pour les Nerd Fonts
+    if [[ "$tool" == "nerd-fonts" ]]; then
+        install_nerd_fonts
+        return $?
+    fi
+    
     local os="$(detect_os)"
     local package_manager="$(detect_package_manager)"
     local package_name="$(get_package_name "$tool" "$os")"
@@ -177,6 +237,119 @@ install_core_tool() {
     esac
     
     log_error "Failed to install $tool"
+    return 1
+}
+
+# Installer les Nerd Fonts selon l'OS
+install_nerd_fonts() {
+    local os="$(detect_os)"
+    local package_manager="$(detect_package_manager)"
+    
+    echo "🔤 Installing Nerd Fonts on $os..."
+    
+    case "$package_manager" in
+        "apt")
+            # Ubuntu/Debian: installer via apt ou téléchargement direct
+            if sudo apt update >/dev/null 2>&1 && sudo apt install -y fonts-firacode >/dev/null 2>&1; then
+                log_success "FiraCode font installed via apt"
+                # Installer aussi la version Nerd Font
+                install_nerd_font_manual "FiraCode"
+                return 0
+            fi
+            ;;
+        "yay")
+            if yay -S --noconfirm ttf-firacode-nerd >/dev/null 2>&1; then
+                log_success "FiraCode Nerd Font installed via yay"
+                return 0
+            fi
+            ;;
+        "paru")
+            if paru -S --noconfirm ttf-firacode-nerd >/dev/null 2>&1; then
+                log_success "FiraCode Nerd Font installed via paru"
+                return 0
+            fi
+            ;;
+        "pacman")
+            # Essayer d'abord les repos officiels, puis AUR
+            if sudo pacman -S --noconfirm ttf-firacode >/dev/null 2>&1; then
+                log_success "FiraCode font installed via pacman"
+                log_info "Installing Nerd Font version manually..."
+                install_nerd_font_manual "FiraCode"
+                return 0
+            fi
+            ;;
+        "dnf")
+            if sudo dnf install -y fira-code-fonts >/dev/null 2>&1; then
+                log_success "FiraCode font installed via dnf"
+                install_nerd_font_manual "FiraCode"
+                return 0
+            fi
+            ;;
+        "brew")
+            if brew install font-fira-code-nerd-font >/dev/null 2>&1; then
+                log_success "FiraCode Nerd Font installed via brew"
+                return 0
+            fi
+            ;;
+    esac
+    
+    # Fallback: installation manuelle
+    log_info "Package manager installation failed, trying manual installation..."
+    install_nerd_font_manual "FiraCode"
+    return $?
+}
+
+# Installation manuelle des Nerd Fonts
+install_nerd_font_manual() {
+    local font_name="${1:-FiraCode}"
+    local font_dir
+    
+    # Déterminer le répertoire des fonts selon l'OS
+    if [[ "$(uname)" == "Darwin" ]]; then
+        font_dir="$HOME/Library/Fonts"
+    else
+        font_dir="$HOME/.local/share/fonts"
+        mkdir -p "$font_dir"
+    fi
+    
+    echo "📥 Downloading $font_name Nerd Font..."
+    
+    # URL de téléchargement (GitHub releases)
+    local download_url="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/${font_name}.zip"
+    local temp_dir="/tmp/nerd-fonts-install"
+    
+    # Créer répertoire temporaire
+    mkdir -p "$temp_dir"
+    
+    # Télécharger et installer
+    if command -v curl >/dev/null 2>&1; then
+        if curl -L "$download_url" -o "$temp_dir/${font_name}.zip" >/dev/null 2>&1; then
+            if command -v unzip >/dev/null 2>&1; then
+                cd "$temp_dir" && unzip -q "${font_name}.zip" && cp *.ttf "$font_dir/" 2>/dev/null
+                
+                # Rafraîchir le cache des fonts
+                if command -v fc-cache >/dev/null 2>&1; then
+                    fc-cache -f "$font_dir" >/dev/null 2>&1
+                fi
+                
+                # Nettoyer
+                rm -rf "$temp_dir"
+                
+                log_success "$font_name Nerd Font installed manually"
+                log_info "You may need to restart your terminal to see the changes"
+                return 0
+            else
+                log_error "unzip not found, cannot extract font"
+            fi
+        else
+            log_error "Failed to download $font_name Nerd Font"
+        fi
+    else
+        log_error "curl not found, cannot download font"
+    fi
+    
+    # Nettoyer en cas d'échec
+    rm -rf "$temp_dir"
     return 1
 }
 
@@ -341,8 +514,40 @@ get_tool_version() {
         "nvim")
             nvim --version 2>/dev/null | head -1 | cut -d' ' -f2 || echo "unknown"
             ;;
+        "nerd-fonts")
+            get_nerd_fonts_info
+            ;;
         *)
             echo "unknown"
             ;;
     esac
+}
+
+# Obtenir des informations sur les Nerd Fonts installées
+get_nerd_fonts_info() {
+    if ! check_nerd_fonts; then
+        echo "Not installed"
+        return
+    fi
+    
+    # Détecter quelle Nerd Font est installée
+    if command -v fc-list >/dev/null 2>&1; then
+        if fc-list | grep -i "jetbrains.*mono.*nerd" >/dev/null; then
+            echo "JetBrains Mono Nerd Font"
+        elif fc-list | grep -i "firacode.*nerd" >/dev/null; then
+            echo "FiraCode Nerd Font"
+        elif fc-list | grep -i "hack.*nerd" >/dev/null; then
+            echo "Hack Nerd Font"
+        elif fc-list | grep -i "source.*code.*nerd" >/dev/null; then
+            echo "Source Code Pro Nerd Font"
+        elif fc-list | grep -i "nerd" >/dev/null; then
+            # Extraire le nom de la première Nerd Font trouvée
+            local font_name="$(fc-list | grep -i "nerd" | head -1 | cut -d: -f2 | cut -d, -f1 | sed 's/^[[:space:]]*//')"
+            echo "${font_name:-Nerd Font}"
+        else
+            echo "Available"
+        fi
+    else
+        echo "Available"
+    fi
 }

@@ -387,6 +387,7 @@ handle_core_tools() {
             echo "  • zsh         - Enhanced shell"
             echo "  • tmux        - Terminal multiplexer"
             echo "  • nvim        - Modern text editor"
+            echo "  • nerd-fonts  - Icon fonts for terminal"
             echo
             echo "Examples:"
             echo "  msh core-tools           # Show status"
