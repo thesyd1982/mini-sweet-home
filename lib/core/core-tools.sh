@@ -390,7 +390,10 @@ offer_core_tools_installation() {
     echo
     
     # Demander confirmation
-    if confirm_action "Would you like to install the missing tools automatically?"; then
+    echo -n "Would you like to install the missing tools automatically? [y/N]: "
+    read -r response
+    
+    if [[ "$response" =~ ^[Yy]([Ee][Ss])?$ ]]; then
         install_missing_core_tools "${missing_tools[@]}"
         return $?
     else
