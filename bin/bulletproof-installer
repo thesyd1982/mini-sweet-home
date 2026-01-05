@@ -1,6 +1,6 @@
 #!/bin/bash
 # MSH v3.0 - Universal Bulletproof Installer
-# ZERO FAILURES for ALL modern tools
+# ZERO FAILURES for ALL modern tools - Multi-OS Support
 
 set -e
 
@@ -11,8 +11,23 @@ readonly BLUE='\033[0;34m'
 readonly CYAN='\033[0;36m'
 readonly NC='\033[0m'
 
+# Load OS detection functions
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MSH_DIR="$(dirname "$SCRIPT_DIR")"
+source "$MSH_DIR/lib/utils/validation.sh"
+
 echo -e "${CYAN}🛡️ BULLETPROOF INSTALLER - ZERO FAILURES FOR ALL TOOLS${NC}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# Detect current system
+CURRENT_OS="$(detect_os)"
+PACKAGE_MANAGER="$(detect_package_manager)"
+echo -e "${BLUE}🔍 System Detection:${NC}"
+echo "  OS: $CURRENT_OS"
+echo "  Package Manager: $PACKAGE_MANAGER"
+echo "  Architecture: $(uname -m)"
+echo "  Kernel: $(uname -s)"
+echo
 
 # Universal tool installer with bulletproof methods
 install_tool_bulletproof() {
@@ -21,29 +36,17 @@ install_tool_bulletproof() {
     
     echo -e "${BLUE}🎯 Installing $tool${NC}"
     
-    # Method 1: cargo install
+    # Method 1: System package manager (OS-specific)
+    if install_via_system_package_manager "$tool"; then
+        echo -e "    ${GREEN}✅ $tool installed via $PACKAGE_MANAGER${NC}"
+        return 0
+    fi
+    
+    # Method 2: cargo install (universal)
     if command -v cargo >/dev/null 2>&1; then
         echo "  → Trying cargo..."
         if cargo install "$tool" >/dev/null 2>&1; then
             echo -e "    ${GREEN}✅ $tool installed via cargo${NC}"
-            return 0
-        fi
-    fi
-    
-    # Method 2: apt install  
-    if command -v apt >/dev/null 2>&1; then
-        echo "  → Trying apt..."
-        local apt_name="$tool"
-        # Handle special package names
-        case "$tool" in
-            rg) apt_name="ripgrep" ;;
-            fd) apt_name="fd-find" ;;
-            eza) apt_name="exa" ;;  # Use exa as fallback for eza
-            cmake) apt_name="cmake" ;;
-        esac
-        
-        if sudo apt install -y "$apt_name" >/dev/null 2>&1; then
-            echo -e "    ${GREEN}✅ $tool installed via apt${NC}"
             return 0
         fi
     fi
@@ -63,6 +66,192 @@ install_tool_bulletproof() {
     echo -e "    ${GREEN}✅ $tool functionality via $fallback${NC}"
     
     return 0  # Always succeed
+}
+
+# Install via system package manager (OS-specific)
+install_via_system_package_manager() {
+    local tool="$1"
+    
+    case "$CURRENT_OS" in
+        arch)
+            install_arch_package "$tool"
+            ;;
+        debian)
+            install_debian_package "$tool"
+            ;;
+        fedora|redhat)
+            install_fedora_package "$tool"
+            ;;
+        macos)
+            install_macos_package "$tool"
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+# Arch Linux installation methods
+install_arch_package() {
+    local tool="$1"
+    local package_name="$tool"
+    
+    # Handle special package names for Arch
+    case "$tool" in
+        rg) package_name="ripgrep" ;;
+        fd) package_name="fd" ;;
+        eza) package_name="eza" ;;
+        bat) package_name="bat" ;;
+        dust) package_name="dust" ;;
+        fzy) package_name="fzy" ;;
+        zoxide) package_name="zoxide" ;;
+        cmake) package_name="cmake" ;;
+    esac
+    
+    # Try AUR helper first (yay/paru)
+    if [[ "$PACKAGE_MANAGER" == "yay" ]]; then
+        echo "  → Trying yay (AUR)..."
+        if yay -S --noconfirm "$package_name" >/dev/null 2>&1; then
+            return 0
+        fi
+    elif [[ "$PACKAGE_MANAGER" == "paru" ]]; then
+        echo "  → Trying paru (AUR)..."
+        if paru -S --noconfirm "$package_name" >/dev/null 2>&1; then
+            return 0
+        fi
+    fi
+    
+    # Fallback to pacman (official repos)
+    if command -v pacman >/dev/null 2>&1; then
+        echo "  → Trying pacman..."
+        if sudo pacman -S --noconfirm "$package_name" >/dev/null 2>&1; then
+            return 0
+        fi
+    fi
+    
+    return 1
+}
+
+# Debian/Ubuntu installation
+install_debian_package() {
+    local tool="$1"
+    local package_name="$tool"
+    
+    # Handle special package names for Debian/Ubuntu
+    case "$tool" in
+        rg) package_name="ripgrep" ;;
+        fd) package_name="fd-find" ;;
+        eza) package_name="exa" ;;  # Use exa as fallback for eza
+        cmake) package_name="cmake" ;;
+    esac
+    
+    if command -v apt >/dev/null 2>&1; then
+        echo "  → Trying apt..."
+        if sudo apt install -y "$package_name" >/dev/null 2>&1; then
+            return 0
+        fi
+    fi
+    
+    return 1
+}
+
+# Fedora/RHEL installation
+install_fedora_package() {
+    local tool="$1"
+    local package_name="$tool"
+    
+    # Handle special package names for Fedora
+    case "$tool" in
+        rg) package_name="ripgrep" ;;
+        fd) package_name="fd-find" ;;
+        eza) package_name="eza" ;;
+        bat) package_name="bat" ;;
+        dust) package_name="dust" ;;
+        fzy) package_name="fzy" ;;
+        zoxide) package_name="zoxide" ;;
+        cmake) package_name="cmake" ;;
+    esac
+    
+    if command -v dnf >/dev/null 2>&1; then
+        echo "  → Trying dnf..."
+        if sudo dnf install -y "$package_name" >/dev/null 2>&1; then
+            return 0
+        fi
+    elif command -v yum >/dev/null 2>&1; then
+        echo "  → Trying yum..."
+        if sudo yum install -y "$package_name" >/dev/null 2>&1; then
+            return 0
+        fi
+    fi
+    
+    return 1
+}
+
+# macOS installation
+install_macos_package() {
+    local tool="$1"
+    local package_name="$tool"
+    
+    # Handle special package names for macOS
+    case "$tool" in
+        rg) package_name="ripgrep" ;;
+        fd) package_name="fd" ;;
+        eza) package_name="eza" ;;
+        bat) package_name="bat" ;;
+        dust) package_name="dust" ;;
+        fzy) package_name="fzy" ;;
+        zoxide) package_name="zoxide" ;;
+        cmake) package_name="cmake" ;;
+    esac
+    
+    if command -v brew >/dev/null 2>&1; then
+        echo "  → Trying brew..."
+        if brew install "$package_name" >/dev/null 2>&1; then
+            return 0
+        fi
+    fi
+    
+    return 1
+}
+
+# Install AUR helper if needed (Arch Linux)
+install_aur_helper() {
+    if [[ "$CURRENT_OS" != "arch" ]]; then
+        return 1
+    fi
+    
+    # Check if AUR helper already exists
+    if command -v yay >/dev/null 2>&1 || command -v paru >/dev/null 2>&1; then
+        return 0
+    fi
+    
+    echo -e "${BLUE}🔧 Installing AUR helper for better Arch support...${NC}"
+    
+    # Install base-devel if not present
+    if ! pacman -Qi base-devel >/dev/null 2>&1; then
+        echo "  → Installing base-devel..."
+        sudo pacman -S --noconfirm base-devel git >/dev/null 2>&1
+    fi
+    
+    # Install yay
+    local temp_dir="/tmp/yay_install_$$"
+    mkdir -p "$temp_dir"
+    cd "$temp_dir"
+    
+    if git clone https://aur.archlinux.org/yay.git >/dev/null 2>&1; then
+        cd yay
+        if makepkg -si --noconfirm >/dev/null 2>&1; then
+            echo -e "    ${GREEN}✅ yay installed successfully${NC}"
+            cd - >/dev/null
+            rm -rf "$temp_dir"
+            return 0
+        fi
+    fi
+    
+    cd - >/dev/null
+    rm -rf "$temp_dir"
+    echo -e "    ${YELLOW}⚠️  AUR helper installation failed, using pacman only${NC}"
+    return 1
 }
 
 # Install GitHub binaries for specific tools
@@ -114,6 +303,16 @@ ensure_fallback() {
         sudo apt install -y "$fallback" >/dev/null 2>&1
     fi
 }
+
+# Pre-installation setup
+if [[ "$CURRENT_OS" == "arch" ]]; then
+    echo -e "${BLUE}🏗️  Arch Linux detected - ensuring optimal setup...${NC}"
+    install_aur_helper
+    # Re-detect package manager after AUR helper installation
+    PACKAGE_MANAGER="$(detect_package_manager)"
+    echo -e "${BLUE}📦 Using package manager: $PACKAGE_MANAGER${NC}"
+    echo
+fi
 
 # Main installation
 echo "Installing all modern tools with bulletproof methods..."
