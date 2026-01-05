@@ -10,6 +10,8 @@ check_sourcing
 source "$LIB_DIR/core/profile.sh"
 # shellcheck source=lib/core/backup.sh  
 source "$LIB_DIR/core/backup.sh"
+# shellcheck source=lib/core/core-tools.sh
+source "$LIB_DIR/core/core-tools.sh"
 
 # Main installation function
 install_msh_system() {
@@ -49,6 +51,12 @@ install_msh_system() {
 # Execute installation steps
 run_installation_steps() {
     local install_type="$1"
+    
+    # Step 0: Check and install core tools (zsh, tmux, nvim)
+    if ! ensure_core_tools; then
+        log_warning "Some core tools are missing, but continuing installation..."
+        echo "💡 You can install missing tools later with: msh core-tools install"
+    fi
     
     # Step 1: Install modern tools
     if ! install_modern_tools; then

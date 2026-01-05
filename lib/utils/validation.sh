@@ -71,7 +71,7 @@ detect_package_manager() {
 # Command validation
 validate_command() {
     local command="$1"
-    local valid_commands=("install" "reinstall" "clean" "uninstall" "test" "status" "aliases" "secrets" "zsh" "debug-path" "help" "--help" "-h")
+    local valid_commands=("install" "reinstall" "clean" "uninstall" "test" "status" "aliases" "secrets" "core-tools" "zsh" "debug-path" "help" "--help" "-h")
     
     for valid_cmd in "${valid_commands[@]}"; do
         if [[ "$command" == "$valid_cmd" ]]; then

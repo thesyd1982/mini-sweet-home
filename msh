@@ -79,6 +79,7 @@ show_help() {
     echo -e "${GREEN}Utilities:${NC}"
     echo "  aliases           - Create convenient shell aliases"
     echo "  secrets           - Manage environment variables and API keys"
+    echo "  core-tools        - Manage core tools (zsh, tmux, nvim)"
     echo "  zsh               - Native ZSH enhancements status"
     echo "  debug-path        - Debug MSH directory detection"
     echo
@@ -89,6 +90,7 @@ show_help() {
     echo "  msh clean         - Completely uninstall and restore originals"
     echo "  msh aliases       - Setup convenient shortcuts"
     echo "  msh secrets init  - Setup your API keys and secrets"
+    echo "  msh core-tools    - Check/install core tools"
     echo "  msh zsh status    - Check native ZSH enhancements"
 }
 
@@ -346,6 +348,59 @@ handle_zsh() {
     esac
 }
 
+# Handle core-tools command
+handle_core_tools() {
+    local action="${1:-status}"
+    
+    # Load core tools module
+    local core_tools_file="$LIB_DIR/core/core-tools.sh"
+    if [[ ! -f "$core_tools_file" ]]; then
+        log_error "Core tools module not found: $core_tools_file"
+        return 1
+    fi
+    
+    source "$core_tools_file"
+    
+    case "$action" in
+        status|st)
+            show_banner "MSH Core Tools Status"
+            show_core_tools_status
+            ;;
+        check|c)
+            ensure_core_tools true
+            ;;
+        install|i)
+            show_banner "MSH Core Tools Installation"
+            offer_core_tools_installation
+            ;;
+        help|--help|-h)
+            show_banner "MSH Core Tools Help"
+            echo "Usage: msh core-tools <command>"
+            echo
+            echo "Commands:"
+            echo "  status, st    - Show core tools status (default)"
+            echo "  check, c      - Check and offer to install missing tools"
+            echo "  install, i    - Install missing core tools"
+            echo "  help          - Show this help"
+            echo
+            echo "Core tools managed:"
+            echo "  • zsh         - Enhanced shell"
+            echo "  • tmux        - Terminal multiplexer"
+            echo "  • nvim        - Modern text editor"
+            echo
+            echo "Examples:"
+            echo "  msh core-tools           # Show status"
+            echo "  msh core-tools check     # Check and install if needed"
+            echo "  msh core-tools install   # Force installation prompt"
+            ;;
+        *)
+            log_error "Unknown core-tools command: $action"
+            echo "Use 'msh core-tools help' for available commands"
+            return 1
+            ;;
+    esac
+}
+
 detect_msh_strategy() {
     if [[ -n "${MSH_PROJECT_DIR:-}" ]] && validate_msh_directory "$MSH_PROJECT_DIR"; then
         echo "Environment variable (MSH_PROJECT_DIR)"
@@ -397,6 +452,9 @@ main() {
             ;;
         secrets)
             handle_secrets "$@"
+            ;;
+        core-tools)
+            handle_core_tools "$@"
             ;;
         zsh)
             handle_zsh "$@"
