@@ -141,6 +141,54 @@ setup_navigation_fallbacks() {
     fi
 }
 
+# Delta fallbacks: delta → diff
+setup_delta_fallbacks() {
+    if command_exists delta; then
+        export MSH_DIFF_TOOL="delta"
+        # Git integration
+        if command_exists git; then
+            git config --global core.pager "delta"
+            git config --global interactive.diffFilter "delta --color-only"
+            git config --global delta.navigate true
+            git config --global delta.light false
+        fi
+    else
+        export MSH_DIFF_TOOL="diff"
+        alias delta='diff'
+    fi
+}
+
+# Hyperfine fallbacks: hyperfine → time
+setup_hyperfine_fallbacks() {
+    if command_exists hyperfine; then
+        export MSH_BENCHMARK_TOOL="hyperfine"
+        alias bench='hyperfine'
+    else
+        export MSH_BENCHMARK_TOOL="time"
+        alias hyperfine='time'
+        alias bench='time'
+    fi
+}
+
+# Tokei fallbacks: tokei → wc/cloc
+setup_tokei_fallbacks() {
+    if command_exists tokei; then
+        export MSH_COUNT_TOOL="tokei"
+        alias count='tokei'
+        alias lines='tokei'
+    elif command_exists cloc; then
+        export MSH_COUNT_TOOL="cloc"
+        alias tokei='cloc'
+        alias count='cloc'
+        alias lines='cloc'
+    else
+        export MSH_COUNT_TOOL="wc"
+        alias tokei='wc -l'
+        alias count='wc -l'
+        alias lines='wc -l'
+    fi
+}
+
 # Editor fallbacks: nvim → vim → nano
 setup_editor_fallbacks() {
     if command_exists nvim; then
@@ -267,6 +315,9 @@ setup_all_fallbacks() {
     setup_cat_fallbacks
     setup_disk_fallbacks
     setup_navigation_fallbacks
+    setup_delta_fallbacks
+    setup_hyperfine_fallbacks
+    setup_tokei_fallbacks
     setup_editor_fallbacks
     setup_git_fallbacks
     setup_process_fallbacks

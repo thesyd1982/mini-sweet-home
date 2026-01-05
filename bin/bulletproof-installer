@@ -143,6 +143,7 @@ install_debian_package() {
         fd) package_name="fd-find" ;;
         eza) package_name="exa" ;;  # Use exa as fallback for eza
         cmake) package_name="cmake" ;;
+        # Note: delta, hyperfine, tokei not in Ubuntu repos - will use cargo/binary
     esac
     
     if command -v apt >/dev/null 2>&1; then
@@ -163,13 +164,16 @@ install_fedora_package() {
     # Handle special package names for Fedora
     case "$tool" in
         rg) package_name="ripgrep" ;;
-        fd) package_name="fd-find" ;;
+        fd) package_name="fd" ;;
         eza) package_name="eza" ;;
         bat) package_name="bat" ;;
         dust) package_name="dust" ;;
         fzy) package_name="fzy" ;;
         zoxide) package_name="zoxide" ;;
         cmake) package_name="cmake" ;;
+        delta) package_name="git-delta" ;;
+        hyperfine) package_name="hyperfine" ;;
+        tokei) package_name="tokei" ;;
     esac
     
     if command -v dnf >/dev/null 2>&1; then
@@ -202,6 +206,9 @@ install_macos_package() {
         fzy) package_name="fzy" ;;
         zoxide) package_name="zoxide" ;;
         cmake) package_name="cmake" ;;
+        delta) package_name="git-delta" ;;
+        hyperfine) package_name="hyperfine" ;;
+        tokei) package_name="tokei" ;;
     esac
     
     if command -v brew >/dev/null 2>&1; then
@@ -328,6 +335,9 @@ declare -A TOOLS=(
     ["dust"]="du"
     ["zoxide"]="cd"
     ["cmake"]="make"
+    ["delta"]="diff"
+    ["hyperfine"]="time"
+    ["tokei"]="wc"
 )
 
 # Install each tool

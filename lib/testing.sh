@@ -69,7 +69,7 @@ test_personal_functions() {
 test_individual_tools() {
     echo "Individual tools check:"
     
-    local tools=("fzy" "rg" "fd" "bat" "eza" "dust" "zoxide" "cmake")
+    local tools=("fzy" "rg" "fd" "bat" "eza" "dust" "zoxide" "cmake" "delta" "hyperfine" "tokei")
     local available=0
     
     for tool in "${tools[@]}"; do

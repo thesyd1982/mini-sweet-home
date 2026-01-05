@@ -150,7 +150,7 @@ handle_status() {
     
     # Check tools
     log_section "🛠️ Modern Tools"
-    local tools=("fzy" "rg" "fd" "bat" "eza" "dust" "zoxide" "cmake")
+    local tools=("fzy" "rg" "fd" "bat" "eza" "dust" "zoxide" "cmake" "delta" "hyperfine" "tokei")
     local available=0
     
     for tool in "${tools[@]}"; do
