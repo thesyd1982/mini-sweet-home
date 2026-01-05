@@ -34,8 +34,8 @@ create_intelligent_symlink() {
     local link_path="$2" 
     local config_name="$3"
     
-    # Validate target exists
-    if [[ ! -f "$target_path" ]]; then
+    # Validate target exists (file or directory)
+    if [[ ! -e "$target_path" ]]; then
         log_error "Target config not found: $target_path"
         return 1
     fi
@@ -63,6 +63,16 @@ create_intelligent_symlink() {
         fi
     fi
     
+    # Ensure parent directory exists
+    local parent_dir="$(dirname "$link_path")"
+    if [[ ! -d "$parent_dir" ]]; then
+        mkdir -p "$parent_dir" 2>/dev/null || {
+            log_error "Failed to create parent directory: $parent_dir"
+            return 1
+        }
+        log_info "Created parent directory: $parent_dir"
+    fi
+    
     # Create new symlink
     if ln -sf "$target_path" "$link_path" 2>/dev/null; then
         log_success "Created $config_name symlink"
@@ -82,6 +92,7 @@ setup_config_symlinks() {
         "$CONFIG_DIR/shell/zsh/zshrc|$HOME/.zshrc|ZSH config"
         "$CONFIG_DIR/tmux/tmux.conf|$HOME/.tmux.conf|Tmux config"
         "$CONFIG_DIR/git/gitconfig|$HOME/.gitconfig|Git config"
+        "$CONFIG_DIR/editor/nvim|$HOME/.config/nvim|Neovim config"
     )
     
     local created_symlinks=()
