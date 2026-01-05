@@ -79,6 +79,7 @@ show_help() {
     echo -e "${GREEN}Utilities:${NC}"
     echo "  aliases           - Create convenient shell aliases"
     echo "  secrets           - Manage environment variables and API keys"
+    echo "  zsh               - Native ZSH enhancements status"
     echo "  debug-path        - Debug MSH directory detection"
     echo
     echo -e "${GREEN}Examples:${NC}"
@@ -88,6 +89,7 @@ show_help() {
     echo "  msh clean         - Completely uninstall and restore originals"
     echo "  msh aliases       - Setup convenient shortcuts"
     echo "  msh secrets init  - Setup your API keys and secrets"
+    echo "  msh zsh status    - Check native ZSH enhancements"
 }
 
 # Handle install command
@@ -296,6 +298,53 @@ handle_debug_path() {
     echo "  config/ directory: $(test -d "$SCRIPT_DIR/config" && echo "✅" || echo "❌")"
 }
 
+# Handle ZSH enhancements command
+handle_zsh() {
+    local action="${1:-status}"
+    
+    case "$action" in
+        status|st)
+            show_banner "MSH Native ZSH Enhancements"
+            
+            # Vérifier si le module existe
+            local native_file="$CONFIG_DIR/shell/zsh/native-enhancements.zsh"
+            if [[ -f "$native_file" ]]; then
+                echo "📁 Native enhancements file: ✅ Found"
+                echo "📍 Location: $native_file"
+                echo
+                
+                # Charger et afficher le statut si nous sommes dans ZSH
+                if [[ -n "${ZSH_VERSION:-}" ]]; then
+                    source "$native_file"
+                    msh_native_status
+                else
+                    echo "⚠️  Not in ZSH shell - native enhancements not active"
+                    echo "💡 Run this command from ZSH to see full status"
+                fi
+            else
+                log_error "Native enhancements file not found: $native_file"
+                return 1
+            fi
+            ;;
+        help|--help|-h)
+            show_banner "MSH ZSH Enhancements Help"
+            echo "Usage: msh zsh <command>"
+            echo
+            echo "Commands:"
+            echo "  status, st    - Show native enhancements status (default)"
+            echo "  help          - Show this help"
+            echo
+            echo "Examples:"
+            echo "  msh zsh           # Show status"
+            echo "  msh zsh status    # Show detailed status"
+            ;;
+        *)
+            log_error "Unknown zsh command: $action"
+            echo "Use 'msh zsh help' for available commands"
+            return 1
+            ;;
+    esac
+}
 
 detect_msh_strategy() {
     if [[ -n "${MSH_PROJECT_DIR:-}" ]] && validate_msh_directory "$MSH_PROJECT_DIR"; then
@@ -348,6 +397,9 @@ main() {
             ;;
         secrets)
             handle_secrets "$@"
+            ;;
+        zsh)
+            handle_zsh "$@"
             ;;
         debug-path)
             handle_debug_path "$@"

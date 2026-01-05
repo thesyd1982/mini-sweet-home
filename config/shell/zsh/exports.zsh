@@ -68,19 +68,22 @@ zstyle ':completion:*' menu select
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
 
 # ===============================
-# 🎨 HIGHLIGHTING SIMPLE
+# 🚀 MSH NATIVE ZSH ENHANCEMENTS
 # ===============================
-[[ -f ~/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && 
-    source ~/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-
-# ===============================
-# 🚀 AUTOSUGGESTIONS (RÉACTIVÉES)
-# ===============================
-if [[ -f ~/.zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
-    source ~/.zsh-autosuggestions/zsh-autosuggestions.zsh
-    ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=240'
-    # Compatibility with vi mode
-    bindkey '^[[Z' autosuggest-accept  # Shift-Tab to accept suggestion
+# Solution native intégrée (remplace les plugins externes)
+MSH_NATIVE_ENHANCEMENTS="$HOME/mini-sweet-home/config/shell/zsh/native-enhancements.zsh"
+if [[ -f "$MSH_NATIVE_ENHANCEMENTS" ]]; then
+    source "$MSH_NATIVE_ENHANCEMENTS"
+else
+    # Fallback vers les plugins externes si disponibles
+    [[ -f ~/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && 
+        source ~/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+    
+    if [[ -f ~/.zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
+        source ~/.zsh-autosuggestions/zsh-autosuggestions.zsh
+        ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=240'
+        bindkey '^[[Z' autosuggest-accept  # Shift-Tab to accept suggestion
+    fi
 fi
 
 # ===============================
