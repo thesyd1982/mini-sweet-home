@@ -308,24 +308,36 @@ handle_zsh() {
         status|st)
             show_banner "MSH Native ZSH Enhancements"
             
-            # Vérifier si le module existe
-            local native_file="$CONFIG_DIR/shell/zsh/native-enhancements.zsh"
-            if [[ -f "$native_file" ]]; then
-                echo "📁 Native enhancements file: ✅ Found"
-                echo "📍 Location: $native_file"
-                echo
-                
-                # Charger et afficher le statut si nous sommes dans ZSH
-                if [[ -n "${ZSH_VERSION:-}" ]]; then
-                    source "$native_file"
-                    msh_native_status
-                else
-                    echo "⚠️  Not in ZSH shell - native enhancements not active"
-                    echo "💡 Run this command from ZSH to see full status"
-                fi
+            # Vérifier les plugins ZSH externes
+            echo "📁 ZSH Plugins Status:"
+            echo
+            
+            if [[ -f ~/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; then
+                echo "  ✅ Syntax Highlighting: ~/.zsh-syntax-highlighting/"
             else
-                log_error "Native enhancements file not found: $native_file"
-                return 1
+                echo "  ❌ Syntax Highlighting: Not found"
+            fi
+            
+            if [[ -f ~/.zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
+                echo "  ✅ Autosuggestions: ~/.zsh-autosuggestions/"
+            else
+                echo "  ❌ Autosuggestions: Not found"
+            fi
+            
+            echo
+            echo "🎯 MSH ZSH Configuration:"
+            echo "  📍 Config: $CONFIG_DIR/shell/zsh/exports.zsh"
+            echo "  🔧 Mode: External plugins (recommended)"
+            echo "  ⚡ Performance: Optimized for full functionality"
+            
+            if [[ -n "${ZSH_VERSION:-}" ]]; then
+                echo
+                echo "✅ Currently running in ZSH $ZSH_VERSION"
+                echo "💡 Syntax highlighting and autosuggestions should be active"
+            else
+                echo
+                echo "⚠️  Not currently in ZSH shell"
+                echo "💡 Start a new ZSH session to see the enhancements"
             fi
             ;;
         help|--help|-h)
